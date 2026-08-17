@@ -21,12 +21,33 @@ const {
   LoginTimeoutError,
 } = require("./lib/capture");
 const { toCSV } = require("./lib/parse");
+const { version: APP_VERSION } = require("./version");
 
 const PORT = process.env.PORT || 4173;
 const CACHE_PATH = path.join(__dirname, "output", "latest.json");
 const STALE_AFTER = 12 * 60 * 60 * 1000; // suggest a fresh pull after 12h
+const VERSIONS_DIR = path.join(__dirname, "public", "_versions");
 
 const app = express();
+
+// Revert route: /v4 (and /v4/app.js, /v4/style.css) serve an archived
+// front-end so you can go back to an earlier UI. The data API stays
+// current, so an old page reads today's numbers.
+app.use((req, res, next) => {
+  const m = req.path.match(/^\/v(\d+)(\/.*)?$/);
+  if (!m) return next();
+  const baseDir = path.join(VERSIONS_DIR, m[1]);
+  if (!fs.existsSync(baseDir)) {
+    return res.status(404).send(`Version ${m[1]} is not archived.`);
+  }
+  const sub = m[2] && m[2] !== "/" ? m[2] : "/index.html";
+  const filePath = path.normalize(path.join(baseDir, sub));
+  if (!filePath.startsWith(baseDir)) return res.status(400).send("Bad path");
+  return res.sendFile(filePath, (err) => {
+    if (err && !res.headersSent) res.status(404).end();
+  });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 let cache = null;
@@ -57,6 +78,7 @@ app.get("/api/state", (req, res) => {
       ? Date.now() - new Date(cache.fetchedAt).getTime() > STALE_AFTER
       : false,
     fetchedAt: cache ? cache.fetchedAt : null,
+    version: APP_VERSION,
   });
 });
 
