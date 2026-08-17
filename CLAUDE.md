@@ -7,13 +7,16 @@ one cell per week.
 ## Read these before changing anything
 
 - **`DISCOVERY.md`** — how the data was found, and the reusable method for
-  finding more. Read this before touching `lib/parse.js`, adding date
-  parameters, pulling a different report, or repairing after an LCR
-  deploy. LCR has **no JSON API**; the data lives in a React Server
-  Components flight payload. That is not guessable, so don't try.
+  finding more, with the console snippets inline. Read this before
+  touching `lib/parse.js`, adding date parameters, pulling a different
+  report, or repairing after an LCR deploy. LCR has **no JSON API**; the
+  data lives in a React Server Components flight payload. That is not
+  guessable, so don't try.
 - **`HANDOFF.md`** — project state, architecture, design intent, hosting
   constraints, roadmap.
-- **`dev/console/`** — the actual tools that found the data. Runnable.
+
+Investigative/console snippets live in `DISCOVERY.md` as text, not as
+shipped `.js` files — the project tree stays lean.
 
 ## Work offline, no credentials needed
 

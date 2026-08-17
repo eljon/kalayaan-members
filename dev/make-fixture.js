@@ -160,7 +160,7 @@ console.table(parsed.weekTotals);
 // -------------------------------------------------- returned missionaries
 // Synthetic returned-missionary report matching the LCR custom-report
 // columns. Every name is invented; nothing here came from a real ward.
-// The real pull is not wired yet — see dev/console/7-custom-report.js.
+// The real pull is not wired yet — its payload shape must be observed first.
 const languages = ["Tagalog", "Cebuano", "Ilokano", "Hiligaynon", "", ""];
 const trStatuses = [
   "Active", "Active", "Active", "Expired", "Expiring next month", "Canceled", "",

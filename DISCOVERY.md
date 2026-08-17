@@ -58,14 +58,28 @@ That was the finding that made the next step obvious.
 ## What worked: intercept `window.fetch`
 
 Stop hunting through the Network tab. Wrap `fetch` and let the page tell
-you which request carries the data.
+you which request carries the data. Paste this into the console on the
+report page, then **change a dropdown or the date range** so the page
+re-fetches. Anything containing report-shaped text logs a `HIT` with its
+URL.
 
-`dev/console/1-find-endpoint.js` does this. Paste it into the console on
-the report page, then **change a dropdown or the date range** so the page
-re-fetches. Anything containing attendance-shaped text logs a `HIT` with
-its URL.
+```js
+(() => {
+  const MATCH = /Elders Quorum|Relief Society|attendance|didAttend/i; // edit per report
+  const orig = window.fetch;
+  window.fetch = async function (...a) {
+    const res = await orig.apply(this, a);
+    const url = (a[0]?.url || a[0]) + "";
+    res.clone().text().then((b) => {
+      if (MATCH.test(b)) console.log("%cHIT", "color:lime;font-weight:bold", url, b.slice(0, 160));
+    }).catch(() => {});
+    return res;
+  };
+  console.log("Armed — change a dropdown; the data request logs as HIT.");
+})();
+```
 
-This immediately produced:
+For attendance this immediately produced:
 
 ```
 HIT /mlt/report/class-and-quorum-attendance?lang=eng
@@ -80,8 +94,30 @@ The response is ~380,000 characters of React Server Components flight
 format: numbered lines, each `id:content`, where content may be a chunk
 manifest, a preload hint, or serialized React output.
 
-`dev/console/2-inspect-flight.js` captures it to `window.__flight` and
-prints the lines that look like they hold data.
+To locate the data line, capture the body and print the long lines that
+parse as JSON:
+
+```js
+(() => {
+  const ROUTE = "class-and-quorum-attendance"; // edit per report
+  const orig = window.fetch;
+  window.fetch = async function (...a) {
+    const res = await orig.apply(this, a);
+    const url = (a[0]?.url || a[0]) + "";
+    if (String(url).includes(ROUTE)) res.clone().text().then((body) => {
+      window.__flight = body;
+      for (const l of body.split(/\n(?=[0-9a-f]+:)/)) {
+        if (l.length < 500) continue;
+        const i = l.indexOf(":");
+        let ok = false; try { JSON.parse(l.slice(i + 1)); ok = true; } catch (_) {}
+        console.log(l.slice(0, i), l.length, ok ? "PARSES AS JSON" : "", l.slice(0, 120));
+      }
+    });
+    return res;
+  };
+  console.log("Armed — change a dropdown. The line marked PARSES AS JSON is the data.");
+})();
+```
 
 For this report the payload sits on **line `1:`**, ~162,000 characters,
 and it is plain JSON. `JSON.parse(line.slice(2))` just works. That will
@@ -95,9 +131,9 @@ Line 1 for this report:
 1:{ orgId, unitNumber, orgOptions[], weekOptions[], visitors[], members[] }
 ```
 
-Inspecting the shape is `dev/console/3-inspect-shape.js`, which prints
-top-level keys and a sample from every array. That is how the two traps
-were found:
+Inspect the shape by logging `Object.keys(data)` and a sample from every
+array (`window.__flight` holds the raw body from the snippet above). That
+is how the two traps were found:
 
 - `members[].weeks[]` contains **only attended weeks**. A member with no
   attendance has `weeks: []`. There is no `didAttend: false` entry. If you
@@ -111,25 +147,26 @@ were found:
 The method generalizes. The findings do not.
 
 1. Open the target report in a browser, signed in.
-2. Paste `dev/console/1-find-endpoint.js`, edited so the regex matches
-   text you expect in that report.
+2. Paste the fetch-interceptor snippet above, editing the MATCH/ROUTE for
+   that report.
 3. Interact with the page so it fetches. **This step is essential.** The
    initial page load may not carry the payload; a filter change usually
    does.
 4. Note the URL that hits. Compare it against the URL before your
    interaction to see which query parameters changed. This is how to
    learn what date or unit parameters the report accepts.
-5. Paste `dev/console/2-inspect-flight.js` to capture and locate the data
-   line, then `dev/console/3-inspect-shape.js` to read its structure.
-6. Write the parser in `lib/parse.js`, add assertions to `dev/check.js`.
+5. Capture the body and locate the data line with the second snippet, then
+   read its structure.
+6. Write the parser (its own module — do not fork `lib/parse.js`), add
+   assertions to a check script.
 
 ### Specifically for multi-month history
 
 This was the top roadmap item and it is now implemented. The finding,
-established with `dev/console/5-diff-date-request.js` (paste, change the
-date range once, read the diff): switching months is **a Next.js server
-action**, not a query parameter. The page POSTs to the report route
-itself with:
+established by capturing the request (paste the interceptor, change the
+date range once, read what differs): switching months is **a Next.js
+server action**, not a query parameter. The page POSTs to the report
+route itself with:
 
 ```
 accept: text/x-component
@@ -151,10 +188,11 @@ Two constraints that came out of the shape:
   calendar year. `capture.js` refuses prior-year months and flags them
   rather than pulling the wrong year's data. Extending across a year
   boundary needs another observation: change the date range to a
-  prior-year month with tool 5 armed and see what carries the year.
+  prior-year month with the interceptor armed and see what carries the year.
 - **The action id is a Next.js internal with no stability guarantee.** When
-  it changes on an LCR deploy, refresh it with `dev/console/6-dump-post.js`
-  and set `MONTH_ACTION_ID` (or the `LCR_MONTH_ACTION` env var).
+  it changes on an LCR deploy, capture a fresh month-switch POST (the
+  interceptor logs its `next-action` header) and set `MONTH_ACTION_ID` (or
+  the `LCR_MONTH_ACTION` env var).
 
 Do not guess the parameter name. Observe it. The failure mode of guessing
 is silent: a wrong parameter still returns *a* month, so the pull looks
@@ -163,9 +201,14 @@ like it worked while showing the wrong data.
 ## Getting the rendered table as a fallback
 
 If the flight format ever becomes unparseable, the DOM still has the
-data. `dev/console/4-dump-tables.js` copies every rendered table to the
-clipboard as TSV. That is also the shape a Playwright DOM-scraping
-fallback would take, if it ever becomes the more stable option.
+data. This one-liner copies every rendered table to the clipboard as TSV,
+which is also the shape a Playwright DOM-scraping fallback would take:
+
+```js
+copy([...document.querySelectorAll("table")].map((t) =>
+  [...t.rows].map((r) => [...r.cells].map((c) => c.innerText.trim()).join("\t")).join("\n")
+).join("\n\n"));
+```
 
 ## Why not just scrape the DOM in the first place
 

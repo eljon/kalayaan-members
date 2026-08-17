@@ -55,8 +55,8 @@ Sign in through the app first; the CLI reuses the same saved session.
 ## How it gets the data
 
 > Changing the parser, pulling a different report, or adding date ranges?
-> Read **`DISCOVERY.md`** first. It documents the method, and
-> `dev/console/` holds the tools. This is not guessable from the code.
+> Read **`DISCOVERY.md`** first. It documents the method and holds the
+> console snippets inline. This is not guessable from the code.
 
 LCR runs on Next.js with React Server Components. There is no public JSON
 API, and the attendance data is not server-rendered into the HTML. It
@@ -79,10 +79,10 @@ The flight format is a Next.js internal with no stability guarantee, so
 an LCR upgrade can change it without notice. The app says so plainly
 rather than showing empty numbers.
 
-To fix it, open the report in your own browser and run the tools in
-`dev/console/` in order to see the new shape, then adjust `extractLine1`
-and `parse` in `lib/parse.js`. The app and the CLI share that one file.
-`DISCOVERY.md` explains the method behind those tools.
+To fix it, open the report in your own browser and run the console
+snippets from `DISCOVERY.md` in order to see the new shape, then adjust
+`extractReportData`/`parse` in `lib/parse.js`. The app and the CLI share
+that one file.
 
 ## Handling
 

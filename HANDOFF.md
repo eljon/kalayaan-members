@@ -58,8 +58,8 @@ If he raises Pages again, the Tailscale row is what he actually wants.
 
 ## How the data is obtained
 
-**Full method and reasoning: `DISCOVERY.md`. Tools: `dev/console/`.**
-Read those before attempting to pull a different report, add date
+**Full method, reasoning, and the console snippets: `DISCOVERY.md`.**
+Read it before attempting to pull a different report, add date
 parameters, or repair the parser. What follows is the summary only.
 
 LCR runs Next.js with React Server Components. There is **no public JSON
@@ -131,8 +131,7 @@ lib/capture.js        Playwright. login() headed, capture() headless.
 lib/parse.js          flight -> JSON -> rows, weekTotals, stats. SHARED.
 fetch-attendance.js   CLI pull to CSV for cron. Exit 0 / 1 signed out / 2 parse failure.
 dev/make-fixture.js   synthetic data for offline development
-dev/check.js          regression assertions
-dev/console/          the tools that found the data. See DISCOVERY.md.
+dev/check.js          regression assertions (attendance + merge)
 public/               vanilla JS, no build step, no framework
 output/latest.json    cache, gitignored
 lcr-session.json      Playwright storageState. Gitignored. LIVE CREDENTIALS.
@@ -177,15 +176,11 @@ An LCR upgrade can change it without notice. The app reports the failure
 rather than showing empty numbers; the CLI dumps the raw payload to
 `output/`.
 
-To repair: open the report in a browser and run the tools in
-`dev/console/` in order. `1-find-endpoint.js` confirms which request
-carries the data, `2-inspect-flight.js` locates the data line, and
-`3-inspect-shape.js` prints the structure. Then adjust `extractLine1` and
-`parse` in `lib/parse.js` and run `npm run check`.
-
-`dev/console/4-dump-tables.js` is the fallback: it copies the rendered
-table as TSV, which is also the shape a Playwright DOM-scraping fallback
-would take if flight parsing ever becomes untenable.
+To repair: open the report in a browser and run the console snippets from
+`DISCOVERY.md` in order — find which request carries the data, locate the
+data line, read its structure. Then adjust `extractReportData`/`parse` in
+`lib/parse.js` and run `npm run check`. `DISCOVERY.md` also has the
+DOM-table fallback one-liner for when flight parsing becomes untenable.
 
 ## Worth building next, roughly in order
 
@@ -196,7 +191,8 @@ would take if flight parsing ever becomes untenable.
    the start, or pass `{ months: N }` for a months-back count instead. See `DISCOVERY.md`, "Specifically
    for multi-month history", for the shape and constraints. Two things
    remain: (a) the action id is pinned in `lib/capture.js` and needs
-   refreshing after an LCR deploy via `dev/console/6-dump-post.js`;
+   refreshing after an LCR deploy (capture a fresh month-switch POST, see
+   `DISCOVERY.md`);
    (b) crossing a calendar-year boundary needs the year parameter, which
    has not been observed yet — the action body carries only a month number.
    The merge path is covered by `dev/check-merge.js`; the live replay is

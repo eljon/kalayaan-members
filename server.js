@@ -150,9 +150,9 @@ app.get("/api/export.csv", (req, res) => {
 });
 
 // Returned missionaries — a separate LCR custom report. The pull is not
-// wired yet (its payload shape must be observed first, see
-// dev/console/7-custom-report.js); this serves whatever has been written
-// to output/returned.json, or the offline fixture the same file holds.
+// wired yet (its payload shape must be observed first); this serves
+// whatever has been written to output/returned.json, or the offline
+// fixture the fixture generator writes there.
 const RETURNED_PATH = path.join(__dirname, "output", "returned.json");
 
 function readReturned() {
