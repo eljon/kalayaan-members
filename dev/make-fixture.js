@@ -156,4 +156,56 @@ fs.writeFileSync(path.join(__dirname, "fixture-payload.json"), JSON.stringify(pa
 console.log("Fixture written to output/latest.json");
 console.log(`  ${parsed.stats.members} on the roll, ${parsed.stats.attending} attending, ${parsed.stats.everyWeek} every week, ${parsed.stats.absent} never seen`);
 console.table(parsed.weekTotals);
+
+// -------------------------------------------------- returned missionaries
+// Synthetic returned-missionary report matching the LCR custom-report
+// columns. Every name is invented; nothing here came from a real ward.
+// The real pull is not wired yet — see dev/console/7-custom-report.js.
+const languages = ["Tagalog", "Cebuano", "Ilokano", "Hiligaynon", "", ""];
+const trStatuses = [
+  "Active", "Active", "Active", "Expired", "Expiring next month", "Canceled", "",
+];
+const callingPool = [
+  "", "", "Elders Quorum First Counselor", "Elders Quorum Second Counselor",
+  "Music Coordinator", "Disability Specialist", "Primary Activity Specialist",
+  "Seminary Teacher", "Sunday School Teacher", "Ward Mission Leader",
+];
+const pad2 = (x) => String(x).padStart(2, "0");
+const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const rmCount = 42;
+const rmUsed = new Set();
+const rmRecords = [];
+for (let i = 0; i < rmCount; i++) {
+  let name;
+  do {
+    name = `${pick(surnames)}, ${pick(givens)} ${pick(givens)}`;
+  } while (rmUsed.has(name));
+  rmUsed.add(name);
+  const status = pick(trStatuses);
+  // Expiration only when there is a status; expired ones in the past.
+  let exp = "";
+  if (status) {
+    const past = status === "Expired";
+    const year = past ? 2015 + Math.floor(rand() * 9) : 2026 + Math.floor(rand() * 2);
+    exp = `${pad2(1 + Math.floor(rand() * 28))} ${pick(monthName)} ${year}`;
+  }
+  rmRecords.push({
+    name,
+    missionCountry: "Philippines",
+    missionLanguage: pick(languages),
+    age: 21 + Math.floor(rand() * 30),
+    trStatus: status,
+    trExpiration: exp,
+    callings: pick(callingPool),
+  });
+}
+rmRecords.sort((a, b) => a.name.localeCompare(b.name));
+
+fs.writeFileSync(
+  path.join(out, "returned.json"),
+  JSON.stringify({ records: rmRecords, fetchedAt: new Date().toISOString(), sample: true })
+);
+console.log(`\nReturned-missionary fixture: ${rmRecords.length} people (sample)`);
+
 console.log("\nNow run: npm run server");

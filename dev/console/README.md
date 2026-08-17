@@ -14,6 +14,7 @@ Read `../../DISCOVERY.md` for the reasoning behind them.
 | `4-dump-tables.js` | Fallback: copy the rendered table as TSV. |
 | `5-diff-date-request.js` | Find the parameter that selects the month. |
 | `6-dump-post.js` | Repair: refresh the month-switch action id. |
+| `7-custom-report.js` | Discover how a custom report delivers its data. |
 
 **The one thing people get wrong:** after pasting, you must *interact*
 with the page, usually by changing a dropdown or the date range. The

@@ -149,6 +149,55 @@ app.get("/api/export.csv", (req, res) => {
   res.send(toCSV(rows, cache.weekOptions));
 });
 
+// Returned missionaries — a separate LCR custom report. The pull is not
+// wired yet (its payload shape must be observed first, see
+// dev/console/7-custom-report.js); this serves whatever has been written
+// to output/returned.json, or the offline fixture the same file holds.
+const RETURNED_PATH = path.join(__dirname, "output", "returned.json");
+
+function readReturned() {
+  try {
+    if (fs.existsSync(RETURNED_PATH)) {
+      return JSON.parse(fs.readFileSync(RETURNED_PATH, "utf8"));
+    }
+  } catch (_) {
+    /* corrupt file is not fatal */
+  }
+  return null;
+}
+
+app.get("/api/returned", (req, res) => {
+  const rm = readReturned();
+  if (!rm) return res.status(404).json({ error: "NO_DATA" });
+  res.json(rm);
+});
+
+const RM_FIELDS = [
+  ["name", "Preferred Name"],
+  ["missionCountry", "Mission Country"],
+  ["missionLanguage", "Mission Language"],
+  ["age", "Age"],
+  ["trStatus", "Temple Recommend Status"],
+  ["trExpiration", "Temple Recommend Expiration Date"],
+  ["callings", "Callings"],
+];
+
+app.get("/api/returned.csv", (req, res) => {
+  const rm = readReturned();
+  if (!rm) return res.status(404).send("Nothing pulled yet");
+  const esc = (v) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const header = RM_FIELDS.map(([, label]) => label).join(",");
+  const lines = (rm.records || []).map((r) =>
+    RM_FIELDS.map(([key]) => esc(r[key])).join(",")
+  );
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", 'attachment; filename="returned-missionaries.csv"');
+  res.send([header, ...lines].join("\n"));
+});
+
 function openBrowser(url) {
   const cmd =
     process.platform === "darwin"
