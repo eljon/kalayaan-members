@@ -15,6 +15,7 @@ const { exec } = require("child_process");
 const {
   login,
   capture,
+  captureReturned,
   hasSession,
   SessionExpiredError,
   NoSessionError,
@@ -170,6 +171,29 @@ app.get("/api/returned", (req, res) => {
   const rm = readReturned();
   if (!rm) return res.status(404).json({ error: "NO_DATA" });
   res.json(rm);
+});
+
+// Pull the returned-missionary report by reading its rendered table with
+// the saved session. Writes output/returned.json.
+app.post("/api/refresh-returned", async (req, res) => {
+  if (busy) return res.status(409).json({ error: "BUSY", busy });
+  busy = "pull";
+  progress = "Reading the returned-missionary report";
+  try {
+    const data = await captureReturned({ onProgress: (m) => { progress = m; } });
+    fs.mkdirSync(path.dirname(RETURNED_PATH), { recursive: true });
+    fs.writeFileSync(RETURNED_PATH, JSON.stringify(data));
+    res.json(data);
+  } catch (err) {
+    if (err instanceof NoSessionError || err instanceof SessionExpiredError) {
+      res.status(401).json({ error: "SESSION_EXPIRED" });
+    } else {
+      res.status(500).json({ error: "PULL_FAILED", detail: err.message });
+    }
+  } finally {
+    busy = null;
+    progress = "";
+  }
 });
 
 const RM_FIELDS = [
