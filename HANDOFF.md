@@ -184,14 +184,16 @@ would take if flight parsing ever becomes untenable.
 
 ## Worth building next, roughly in order
 
-1. **Trend across months.** LCR returns one month at a time. Highest
-   value by far, and the layout has room: the week rail extends
-   horizontally and the roll gains columns.
-   **Start with `DISCOVERY.md`, "Specifically for multi-month history".**
-   Arm `dev/console/1-find-endpoint.js`, change the date range in the UI,
-   and diff the request URL to learn the parameter. Do not guess the
-   parameter name; observe it. Then loop in `lib/capture.js` and merge
-   `weekOptions` and `members[].weeks` across responses.
+1. **Trend across months.** DONE for within-year spans. `capture()` pulls
+   `LCR_MONTHS` months (default 3) by replaying the month-switch server
+   action and merging with `mergeMonths`. See `DISCOVERY.md`, "Specifically
+   for multi-month history", for the shape and constraints. Two things
+   remain: (a) the action id is pinned in `lib/capture.js` and needs
+   refreshing after an LCR deploy via `dev/console/6-dump-post.js`;
+   (b) crossing a calendar-year boundary needs the year parameter, which
+   has not been observed yet — the action body carries only a month number.
+   The merge path is covered by `dev/check-merge.js`; the live replay is
+   verified by running `npm run pull` against a real session.
 2. **Phone access via Tailscale.** What the owner keeps circling around
    when he says GitHub Pages. Small setup, no public exposure.
 3. Flag members whose attendance dropped versus the previous period.

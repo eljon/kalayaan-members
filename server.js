@@ -76,7 +76,7 @@ app.post("/api/login", async (req, res) => {
     });
     progress = "Signed in. Reading the report";
     busy = "pull";
-    const data = await capture();
+    const data = await capture({ onProgress: (msg) => { progress = msg; } });
     cache = data;
     writeCache(data);
     res.json(data);
@@ -97,7 +97,7 @@ app.post("/api/refresh", async (req, res) => {
   busy = "pull";
   progress = "Reading the report";
   try {
-    const data = await capture();
+    const data = await capture({ onProgress: (msg) => { progress = msg; } });
     cache = data;
     writeCache(data);
     res.json(data);

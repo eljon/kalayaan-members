@@ -125,13 +125,36 @@ The method generalizes. The findings do not.
 
 ### Specifically for multi-month history
 
-This is the top item on the roadmap and it needs step 4. The report shows
-one month at a time. `dev/console/5-diff-date-request.js` is built for
-exactly this: paste it, change the date range in the UI once, and it
-prints what differs between the two report requests — query parameter,
-RSC header, or POST body. Whatever changes is what `lib/capture.js` needs
-to loop over. Then merge the `weekOptions`, `visitors`, and
-`members[].weeks` arrays across responses.
+This was the top roadmap item and it is now implemented. The finding,
+established with `dev/console/5-diff-date-request.js` (paste, change the
+date range once, read the diff): switching months is **a Next.js server
+action**, not a query parameter. The page POSTs to the report route
+itself with:
+
+```
+accept: text/x-component
+next-action: <hash>            # the action id, changes on LCR deploy
+next-router-state-tree: <...>  # the route's render tree
+body: [unitNumber, "MM", "eng"]
+```
+
+`lib/capture.js` replays this POST once per month (via the browser
+context's cookie jar, so the saved session authenticates it), then
+`mergeMonths` in `lib/parse.js` unions `weekOptions`, `visitors`, and
+`members[].weeks` across the responses. The router state tree is captured
+live off the page's own requests, so only the action id is pinned.
+
+Two constraints that came out of the shape:
+
+- **No year in the body.** The action selects a month by number only; the
+  server assumes the current year. So a span is reliable only within one
+  calendar year. `capture.js` refuses prior-year months and flags them
+  rather than pulling the wrong year's data. Extending across a year
+  boundary needs another observation: change the date range to a
+  prior-year month with tool 5 armed and see what carries the year.
+- **The action id is a Next.js internal with no stability guarantee.** When
+  it changes on an LCR deploy, refresh it with `dev/console/6-dump-post.js`
+  and set `MONTH_ACTION_ID` (or the `LCR_MONTH_ACTION` env var).
 
 Do not guess the parameter name. Observe it. The failure mode of guessing
 is silent: a wrong parameter still returns *a* month, so the pull looks

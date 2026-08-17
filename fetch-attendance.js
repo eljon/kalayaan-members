@@ -51,8 +51,9 @@ const OUT_DIR = path.join(__dirname, "output");
   fs.writeFileSync(path.join(OUT_DIR, "latest.json"), JSON.stringify(result));
 
   console.log(
-    `${result.stats.members} members, ${result.stats.attending} with attendance, ${result.weekOptions.length} weeks`
+    `${result.stats.members} members, ${result.stats.attending} with attendance, ${result.weekOptions.length} weeks across ${result.months || 1} month(s)`
   );
   console.table(result.weekTotals);
+  if (result.warnings) result.warnings.forEach((w) => console.warn(`  note: ${w}`));
   console.log(`Written to ${OUT_DIR}`);
 })();
