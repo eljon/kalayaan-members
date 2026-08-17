@@ -79,10 +79,10 @@ The flight format is a Next.js internal with no stability guarantee, so
 an LCR upgrade can change it without notice. The app says so plainly
 rather than showing empty numbers.
 
-To fix it, open the report in your own browser, run the console extractor
-(`../lcr-attendance-extract.js`) to see the new shape, then adjust
-`extractLine1` and `parse` in `lib/parse.js`. The app and the CLI share
-that one file.
+To fix it, open the report in your own browser and run the tools in
+`dev/console/` in order to see the new shape, then adjust `extractLine1`
+and `parse` in `lib/parse.js`. The app and the CLI share that one file.
+`DISCOVERY.md` explains the method behind those tools.
 
 ## Handling
 
