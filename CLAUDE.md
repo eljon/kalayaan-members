@@ -4,16 +4,23 @@ Local web app that pulls the Class & Quorum Attendance report from LCR
 (Leader and Clerk Resources) and shows it as a roll: one row per member,
 one cell per week.
 
-**Read `HANDOFF.md` before changing anything.** It covers how the data is
-obtained, dead ends already ruled out, and why GitHub Pages cannot host
-this.
+## Read these before changing anything
+
+- **`DISCOVERY.md`** — how the data was found, and the reusable method for
+  finding more. Read this before touching `lib/parse.js`, adding date
+  parameters, pulling a different report, or repairing after an LCR
+  deploy. LCR has **no JSON API**; the data lives in a React Server
+  Components flight payload. That is not guessable, so don't try.
+- **`HANDOFF.md`** — project state, architecture, design intent, hosting
+  constraints, roadmap.
+- **`dev/console/`** — the actual tools that found the data. Runnable.
 
 ## Work offline, no credentials needed
 
     npm install
-    npm run fixture     # synthetic data with the real shape and numbers
+    npm run fixture     # synthetic data, real shape, real numbers
     npm run server      # http://localhost:4173
-    npm run check       # regression assertions
+    npm run check       # regression assertions, exits non-zero on drift
 
 Run `npm run check` after touching `lib/parse.js`.
 
@@ -36,5 +43,5 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
 ## Design intent
 
 Answers "who haven't we seen", not "are the numbers up". Default sort is
-fewest weeks attended. **No charts** — that's deliberate, not an
-oversight. Palette and type stack are in `HANDOFF.md`.
+fewest weeks attended. **No charts** — deliberate, not an oversight.
+Palette and type stack are in `HANDOFF.md`.

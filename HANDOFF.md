@@ -58,13 +58,19 @@ If he raises Pages again, the Tailscale row is what he actually wants.
 
 ## How the data is obtained
 
+**Full method and reasoning: `DISCOVERY.md`. Tools: `dev/console/`.**
+Read those before attempting to pull a different report, add date
+parameters, or repair the parser. What follows is the summary only.
+
 LCR runs Next.js with React Server Components. There is **no public JSON
 API**, and attendance is **not** server-rendered into the HTML
 (`self.__next_f` is empty on that route). It arrives inside the RSC flight
 payload for `/mlt/report/class-and-quorum-attendance`, on the line
 prefixed `1:`, which happens to be plain JSON.
 
-Established by intercepting `window.fetch` on the live page.
+Found by intercepting `window.fetch` on the live page and then changing a
+dropdown. The interaction is essential; the initial load does not carry
+the payload.
 
 ### Dead ends already ruled out, do not repeat
 
@@ -74,7 +80,10 @@ Established by intercepting `window.fetch` on the live page.
 - `attendance-rolls?_rsc=…` are Next.js route prefetches, no data
 - `self.__next_f` is empty, nothing is inlined in the document
 - DevTools response-body search for member names finds nothing, because
-  the payload is only present after a client-side fetch
+  the payload only exists after a client-side fetch
+
+`DISCOVERY.md` explains why each of these failed, which is what makes the
+working method obvious.
 
 ### Payload shape, confirmed against live data
 
@@ -123,6 +132,7 @@ lib/parse.js          flight -> JSON -> rows, weekTotals, stats. SHARED.
 fetch-attendance.js   CLI pull to CSV for cron. Exit 0 / 1 signed out / 2 parse failure.
 dev/make-fixture.js   synthetic data for offline development
 dev/check.js          regression assertions
+dev/console/          the tools that found the data. See DISCOVERY.md.
 public/               vanilla JS, no build step, no framework
 output/latest.json    cache, gitignored
 lcr-session.json      Playwright storageState. Gitignored. LIVE CREDENTIALS.
@@ -162,33 +172,26 @@ An LCR upgrade can change it without notice. The app reports the failure
 rather than showing empty numbers; the CLI dumps the raw payload to
 `output/`.
 
-To repair, open the report in a browser, run this in the console, change
-a dropdown, then inspect `window.__flight`:
+To repair: open the report in a browser and run the tools in
+`dev/console/` in order. `1-find-endpoint.js` confirms which request
+carries the data, `2-inspect-flight.js` locates the data line, and
+`3-inspect-shape.js` prints the structure. Then adjust `extractLine1` and
+`parse` in `lib/parse.js` and run `npm run check`.
 
-```js
-(() => {
-  const o = window.fetch;
-  window.fetch = async function (...a) {
-    const r = await o.apply(this, a);
-    const u = (a[0]?.url || a[0]) + "";
-    if (u.includes("class-and-quorum-attendance"))
-      r.clone().text().then(t => { window.__flight = t; console.log("captured", t.length); });
-    return r;
-  };
-  console.log("armed, change the dropdown");
-})();
-```
-
-Then adjust `extractLine1` and `parse` in `lib/parse.js` and run
-`npm run check`.
+`dev/console/4-dump-tables.js` is the fallback: it copies the rendered
+table as TSV, which is also the shape a Playwright DOM-scraping fallback
+would take if flight parsing ever becomes untenable.
 
 ## Worth building next, roughly in order
 
-1. **Trend across months.** LCR returns one month at a time. The report
-   URL accepts date parameters, so looping and merging would give real
-   history. Highest value by far, and the layout has room: the week rail
-   extends horizontally and the roll gains columns. Check what parameters
-   the page sends when the date range changes.
+1. **Trend across months.** LCR returns one month at a time. Highest
+   value by far, and the layout has room: the week rail extends
+   horizontally and the roll gains columns.
+   **Start with `DISCOVERY.md`, "Specifically for multi-month history".**
+   Arm `dev/console/1-find-endpoint.js`, change the date range in the UI,
+   and diff the request URL to learn the parameter. Do not guess the
+   parameter name; observe it. Then loop in `lib/capture.js` and merge
+   `weekOptions` and `members[].weeks` across responses.
 2. **Phone access via Tailscale.** What the owner keeps circling around
    when he says GitHub Pages. Small setup, no public exposure.
 3. Flag members whose attendance dropped versus the previous period.

@@ -54,6 +54,10 @@ Sign in through the app first; the CLI reuses the same saved session.
 
 ## How it gets the data
 
+> Changing the parser, pulling a different report, or adding date ranges?
+> Read **`DISCOVERY.md`** first. It documents the method, and
+> `dev/console/` holds the tools. This is not guessable from the code.
+
 LCR runs on Next.js with React Server Components. There is no public JSON
 API, and the attendance data is not server-rendered into the HTML. It
 arrives in the RSC flight payload for
