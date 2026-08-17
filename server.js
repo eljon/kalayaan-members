@@ -49,7 +49,14 @@ app.use((req, res, next) => {
   });
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+// no-cache so a stale front-end can never linger after an update
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    etag: true,
+    maxAge: 0,
+    setHeaders: (res) => res.setHeader("Cache-Control", "no-cache, must-revalidate"),
+  })
+);
 
 let cache = null;
 let busy = null; // "login" | "pull" | null
@@ -170,6 +177,7 @@ function readReturned() {
 // Serves cached returned-missionary data, and pulls it on first open so the
 // tab fills itself the way the attendance roll does — no button to press.
 app.get("/api/returned", async (req, res) => {
+  console.error(`[api] /api/returned hit (force=${req.query.force || "0"})`);
   const cached = readReturned();
   if (cached && !cached.sample && req.query.force !== "1") return res.json(cached);
   if (!hasSession()) {
@@ -262,7 +270,7 @@ function openBrowser(url) {
 
 app.listen(PORT, "127.0.0.1", () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\n  Attendance Roll is open at ${url}`);
+  console.log(`\n  Attendance Roll v${APP_VERSION} is open at ${url}`);
   console.log("  Leave this window running. Press Control-C to stop.\n");
   if (!process.env.NO_OPEN) openBrowser(url);
 });
