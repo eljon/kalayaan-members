@@ -167,10 +167,38 @@ function readReturned() {
   return null;
 }
 
-app.get("/api/returned", (req, res) => {
-  const rm = readReturned();
-  if (!rm) return res.status(404).json({ error: "NO_DATA" });
-  res.json(rm);
+// Serves cached returned-missionary data, and pulls it on first open so the
+// tab fills itself the way the attendance roll does — no button to press.
+app.get("/api/returned", async (req, res) => {
+  const cached = readReturned();
+  if (cached && !cached.sample && req.query.force !== "1") return res.json(cached);
+  if (!hasSession()) {
+    if (cached) return res.json(cached);
+    return res.status(401).json({ error: "SESSION_EXPIRED" });
+  }
+  if (busy) {
+    if (cached) return res.json(cached);
+    return res.status(409).json({ error: "BUSY", busy });
+  }
+  busy = "pull";
+  progress = "Reading the returned-missionary report";
+  try {
+    const data = await captureReturned({ onProgress: (m) => { progress = m; } });
+    fs.mkdirSync(path.dirname(RETURNED_PATH), { recursive: true });
+    fs.writeFileSync(RETURNED_PATH, JSON.stringify(data));
+    res.json(data);
+  } catch (err) {
+    if (err instanceof NoSessionError || err instanceof SessionExpiredError) {
+      res.status(401).json({ error: "SESSION_EXPIRED" });
+    } else if (cached) {
+      res.json(cached); // stale beats nothing
+    } else {
+      res.status(500).json({ error: "PULL_FAILED", detail: err.message });
+    }
+  } finally {
+    busy = null;
+    progress = "";
+  }
 });
 
 // Pull the returned-missionary report by reading its rendered table with
