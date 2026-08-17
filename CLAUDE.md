@@ -43,5 +43,7 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
 ## Design intent
 
 Answers "who haven't we seen", not "are the numbers up". Default sort is
-fewest weeks attended. **No charts** — deliberate, not an oversight.
+fewest weeks attended. A line graph of weekly attendance (numbers and
+percentages) sits above the roll, added at the owner's request — built as
+inline SVG, **no chart library** (that rule still holds).
 Palette and type stack are in `HANDOFF.md`.

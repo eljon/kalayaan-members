@@ -152,18 +152,23 @@ The organizing question is **"who haven't we seen"**, not "are the numbers
 up". A bishopric uses this to find people who have stopped coming. So:
 
 - Default sort is fewest weeks attended
-- The summary counts people, not percentages
-- "Not seen at all" is the only figure in the alert color
-- **No bar charts, deliberately.** Week totals are typographic. The one
-  chart-like element is a 3px rule whose width tracks attendance.
-- Layout mirrors a paper attendance roll: names left, weeks across,
-  filled squares present, hollow absent, dashed outline for never seen
+- The people summary in the masthead counts people; "Not seen at all" is
+  the only figure in the alert color
+- Layout mirrors a paper attendance roll: names left, weeks across grouped
+  by month, filled squares present, hollow absent, dashed outline for
+  never seen
+
+The original brief said "no charts, deliberately". That was overridden by
+the owner (Aug 2026), who asked for a line graph of weekly attendance
+above the roll, showing both counts and percentages. It is hand-rolled
+inline SVG in `renderGraph()` — **no chart library**, which keeps the
+no-build-step, no-dependency rule intact. That part of the brief still
+holds: if a change adds a charting *library*, it has misread it. The graph
+itself is now wanted.
 
 Palette: ledger `#E4E2D9`, rule `#C6C2B4`, ink `#23262A`, attended
 `#2F5D50`, alert `#8C2F26`. Type: Bitter display, IBM Plex Sans UI, IBM
 Plex Mono for data with tabular figures.
-
-If a change adds a chart library, it has misread the brief.
 
 ## Fragility
 
