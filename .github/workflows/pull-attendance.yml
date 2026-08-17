@@ -1,0 +1,56 @@
+# Scheduled attendance pull.
+#
+# DISABLED BY DEFAULT. Read HANDOFF.md before enabling.
+#
+# This only makes sense on a PRIVATE repository. It commits membership
+# records to git history, and it needs LCR_SESSION to hold a valid
+# Playwright storageState. That session expires every few days and cannot
+# be renewed automatically, because LCR requires MFA. Expect to paste a
+# fresh secret regularly.
+#
+# To enable: remove the `if: false` below, and add the contents of your
+# local lcr-session.json as a repository secret named LCR_SESSION.
+
+name: Pull attendance
+
+on:
+  schedule:
+    - cron: "0 22 * * 0" # Sunday 22:00 UTC
+  workflow_dispatch:
+
+jobs:
+  pull:
+    if: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Restore session
+        run: echo "$LCR_SESSION" > lcr-session.json
+        env:
+          LCR_SESSION: ${{ secrets.LCR_SESSION }}
+
+      - name: Pull
+        run: node fetch-attendance.js
+
+      - name: Remove session before anything is committed
+        if: always()
+        run: rm -f lcr-session.json
+
+      - name: Commit results
+        run: |
+          git config user.name "attendance-bot"
+          git config user.email "attendance-bot@users.noreply.github.com"
+          git add -f output/latest.json
+          git diff --staged --quiet || git commit -m "Attendance $(date -u +%F)"
+          git push

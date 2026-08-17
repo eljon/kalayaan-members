@@ -1,0 +1,10 @@
+# Live authentication cookies. Never commit.
+lcr-session.json
+
+# Real membership records. Never commit.
+output/
+
+node_modules/
+run.log
+.chromium-ready
+.DS_Store

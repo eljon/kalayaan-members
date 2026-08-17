@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Roll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-id">
+    <span class="eyebrow" id="unit-line">Loading</span>
+    <h1>Attendance Roll</h1>
+  </div>
+  <div class="masthead-actions">
+    <span class="stamp" id="stamp"></span>
+    <button id="refresh" class="btn">Refresh from LCR</button>
+  </div>
+</header>
+
+<main id="main" hidden>
+
+  <section class="ledger" aria-label="Weekly totals">
+    <div class="ledger-rail" id="week-rail"></div>
+    <dl class="tally" id="tally"></dl>
+  </section>
+
+  <section class="controls">
+    <div class="field field-search">
+      <label for="q">Find a name</label>
+      <input id="q" type="search" placeholder="Start typing" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="org">Organization</label>
+      <select id="org"><option value="">All organizations</option></select>
+    </div>
+    <div class="field">
+      <label for="sort">Order</label>
+      <select id="sort">
+        <option value="gaps">Fewest weeks attended</option>
+        <option value="most">Most weeks attended</option>
+        <option value="name">Name, A to Z</option>
+      </select>
+    </div>
+    <div class="field field-toggle">
+      <label for="hide-absent">Roll</label>
+      <div class="toggle">
+        <input type="checkbox" id="hide-absent">
+        <label for="hide-absent" class="toggle-label">Hide those with no attendance</label>
+      </div>
+    </div>
+    <a class="btn btn-quiet" id="export" href="/api/export.csv">Download CSV</a>
+  </section>
+
+  <section class="roll" aria-label="Member attendance">
+    <div class="roll-head" id="roll-head"></div>
+    <div class="roll-body" id="roll-body"></div>
+    <p class="roll-empty" id="roll-empty" hidden>No one matches that filter.</p>
+  </section>
+
+  <footer class="colophon">
+    <p><span class="key"><i class="cell on"></i> attended</span>
+       <span class="key"><i class="cell"></i> absent</span>
+       <span class="key"><i class="cell gone"></i> absent every week</span></p>
+    <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+  </footer>
+
+</main>
+
+<div class="curtain" id="curtain">
+  <div class="curtain-inner">
+    <h2 id="curtain-title">Opening the roll</h2>
+    <p id="curtain-body">Reading the last saved pull.</p>
+    <button id="curtain-action" class="btn" hidden></button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "lcr-attendance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Class and quorum attendance roll from Leader and Clerk Resources",
+  "scripts": {
+    "start": "node start.js",
+    "server": "node server.js",
+    "pull": "node fetch-attendance.js",
+    "fixture": "node dev/make-fixture.js",
+    "check": "node dev/check.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "playwright": "^1.45.0"
+  }
+}
