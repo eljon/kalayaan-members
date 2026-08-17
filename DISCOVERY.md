@@ -126,12 +126,16 @@ The method generalizes. The findings do not.
 ### Specifically for multi-month history
 
 This is the top item on the roadmap and it needs step 4. The report shows
-one month at a time. Change the date range in the UI with the interceptor
-armed, and diff the request URL against the previous one. Whatever
-parameter changes is what `lib/capture.js` needs to loop over. Then merge
-the `weekOptions` and `members[].weeks` arrays across responses.
+one month at a time. `dev/console/5-diff-date-request.js` is built for
+exactly this: paste it, change the date range in the UI once, and it
+prints what differs between the two report requests — query parameter,
+RSC header, or POST body. Whatever changes is what `lib/capture.js` needs
+to loop over. Then merge the `weekOptions`, `visitors`, and
+`members[].weeks` arrays across responses.
 
-Do not guess the parameter name. Observe it.
+Do not guess the parameter name. Observe it. The failure mode of guessing
+is silent: a wrong parameter still returns *a* month, so the pull looks
+like it worked while showing the wrong data.
 
 ## Getting the rendered table as a fallback
 
