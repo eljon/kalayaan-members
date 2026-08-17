@@ -184,9 +184,11 @@ would take if flight parsing ever becomes untenable.
 
 ## Worth building next, roughly in order
 
-1. **Trend across months.** DONE for within-year spans. `capture()` pulls
-   `LCR_MONTHS` months (default 3) by replaying the month-switch server
-   action and merging with `mergeMonths`. See `DISCOVERY.md`, "Specifically
+1. **Trend across months.** DONE for within-year spans, verified against
+   live LCR. `capture()` pulls from `LCR_START_MONTH` (default "04",
+   April) through the current month by replaying the month-switch server
+   action and merging with `mergeMonths`. Set `LCR_START_MONTH` to move
+   the start, or pass `{ months: N }` for a months-back count instead. See `DISCOVERY.md`, "Specifically
    for multi-month history", for the shape and constraints. Two things
    remain: (a) the action id is pinned in `lib/capture.js` and needs
    refreshing after an LCR deploy via `dev/console/6-dump-post.js`;
