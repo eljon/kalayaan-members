@@ -16,6 +16,7 @@ const {
   login,
   capture,
   captureReturned,
+  captureMembers,
   hasSession,
   SessionExpiredError,
   NoSessionError,
@@ -255,6 +256,65 @@ app.get("/api/returned.csv", (req, res) => {
   );
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="returned-missionaries.csv"');
+  res.send([header, ...lines].join("\n"));
+});
+
+// All members — another LCR custom report, ~65 columns. Same generic pull;
+// auto-loads on first open like the returned report.
+const MEMBERS_PATH = path.join(__dirname, "output", "members.json");
+
+function readMembers() {
+  try {
+    if (fs.existsSync(MEMBERS_PATH)) return JSON.parse(fs.readFileSync(MEMBERS_PATH, "utf8"));
+  } catch (_) { /* corrupt file is not fatal */ }
+  return null;
+}
+
+app.get("/api/members", async (req, res) => {
+  console.error(`[api] /api/members hit (force=${req.query.force || "0"})`);
+  const cached = readMembers();
+  if (cached && !cached.sample && req.query.force !== "1") return res.json(cached);
+  if (!hasSession()) {
+    if (cached) return res.json(cached);
+    return res.status(401).json({ error: "SESSION_EXPIRED" });
+  }
+  if (busy) {
+    if (cached) return res.json(cached);
+    return res.status(409).json({ error: "BUSY", busy });
+  }
+  busy = "pull";
+  progress = "Reading the all-members report";
+  try {
+    const data = await captureMembers({ onProgress: (m) => { progress = m; } });
+    fs.mkdirSync(path.dirname(MEMBERS_PATH), { recursive: true });
+    fs.writeFileSync(MEMBERS_PATH, JSON.stringify(data));
+    res.json(data);
+  } catch (err) {
+    if (err instanceof NoSessionError || err instanceof SessionExpiredError) {
+      res.status(401).json({ error: "SESSION_EXPIRED" });
+    } else if (cached) {
+      res.json(cached);
+    } else {
+      res.status(500).json({ error: "PULL_FAILED", detail: err.message });
+    }
+  } finally {
+    busy = null;
+    progress = "";
+  }
+});
+
+app.get("/api/members.csv", (req, res) => {
+  const m = readMembers();
+  if (!m) return res.status(404).send("Nothing pulled yet");
+  const cols = m.columns || [];
+  const esc = (v) => {
+    const str = String(v ?? "");
+    return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+  };
+  const header = cols.map((c) => esc(c.label)).join(",");
+  const lines = (m.records || []).map((r) => cols.map((c) => esc(r[c.key])).join(","));
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", 'attachment; filename="all-members.csv"');
   res.send([header, ...lines].join("\n"));
 });
 

@@ -208,4 +208,51 @@ fs.writeFileSync(
 );
 console.log(`\nReturned-missionary fixture: ${rmRecords.length} people (sample)`);
 
+// -------------------------------------------------- all members (sample)
+// A wide custom report like LCR's all-members export. Invented data.
+const memCols = [
+  "record.preferred.name","record.address.city","record.address.country",
+  "record.age","record.baptism.date","record.birth.country","record.gender",
+  "record.priesthood","record.priesthood.office","record.marriage.status",
+  "custom-reports.temple.recommend.status","custom-reports.temple.recommend.expiration.date",
+  "record.is.returned.missionary","record.head.of.house","record.individual.email",
+];
+const pretty = (h) => h.includes(".")
+  ? h.replace(/^(record|custom-reports)\./, "").replace(/[.\-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  : h;
+const slug = (l) => l.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+const memColumns = memCols.map((h) => { const label = pretty(h); return { key: slug(label), label, raw: h }; });
+const memUsed = new Set();
+const memRecords = [];
+for (let i = 0; i < 120; i++) {
+  let name; do { name = `${pick(surnames)}, ${pick(givens)} ${pick(givens)}`; } while (memUsed.has(name));
+  memUsed.add(name);
+  const vals = {
+    "record.preferred.name": name,
+    "record.address.city": pick(["Quezon City", "Caloocan", "Manila", ""]),
+    "record.address.country": "Philippines",
+    "record.age": String(8 + Math.floor(rand() * 80)),
+    "record.baptism.date": `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2005 + Math.floor(rand()*20)}`,
+    "record.birth.country": "Philippines",
+    "record.gender": rand() > 0.5 ? "M" : "F",
+    "record.priesthood": pick(["Melchizedek", "Aaronic", ""]),
+    "record.priesthood.office": pick(["Elder", "Priest", "Teacher", "Deacon", ""]),
+    "record.marriage.status": pick(["Single", "Married", ""]),
+    "custom-reports.temple.recommend.status": pick(["Active", "Expired", "Expiring next month", "Canceled", ""]),
+    "custom-reports.temple.recommend.expiration.date": rand() > 0.4 ? `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2026 + Math.floor(rand()*2)}` : "",
+    "record.is.returned.missionary": rand() > 0.85 ? "Yes" : "No",
+    "record.head.of.house": name,
+    "record.individual.email": rand() > 0.6 ? "member@example.com" : "",
+  };
+  const rec = {};
+  memColumns.forEach((c) => { rec[c.key] = vals[c.raw] != null ? vals[c.raw] : ""; });
+  memRecords.push(rec);
+}
+memRecords.sort((a, b) => String(a[memColumns[0].key]).localeCompare(String(b[memColumns[0].key])));
+fs.writeFileSync(
+  path.join(out, "members.json"),
+  JSON.stringify({ columns: memColumns, records: memRecords, fetchedAt: new Date().toISOString(), sample: true })
+);
+console.log(`All-members fixture: ${memRecords.length} people, ${memColumns.length} columns (sample)`);
+
 console.log("\nNow run: npm run server");
