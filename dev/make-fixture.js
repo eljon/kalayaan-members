@@ -239,7 +239,12 @@ for (let i = 0; i < 120; i++) {
     "record.address.city": pick(["Quezon City", "Caloocan", "Manila", ""]),
     "record.address.country": "Philippines",
     "record.age": String(8 + Math.floor(rand() * 80)),
-    "record.baptism.date": `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2005 + Math.floor(rand()*20)}`,
+    // Most were baptized years ago; a few are recent converts baptized
+    // partway through the attendance window, so their attendance denominator
+    // is reduced (weeks before baptism don't count).
+    "record.baptism.date": rand() < 0.12
+      ? `${pick(["12", "19", "26"])} Jul 2026`
+      : `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2005 + Math.floor(rand()*20)}`,
     "record.birth.country": "Philippines",
     "record.gender": rand() > 0.5 ? "M" : "F",
     "record.priesthood": pick(["Melchizedek", "Aaronic", ""]),
