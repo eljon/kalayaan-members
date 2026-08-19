@@ -173,15 +173,23 @@ const callingPool = [
 const pad2 = (x) => String(x).padStart(2, "0");
 const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+// Draw the returned-missionary and all-members fixtures from the SAME roster
+// as the attendance roll, so the app's participation cross-reference (which
+// matches by name) produces a realistic attending / not-attending split
+// instead of everyone reading as "not on the roll".
+const rosterNames = members.map((m) => m.name);
+const pickName = (used) => {
+  let n;
+  do { n = pick(rosterNames); } while (used.has(n));
+  used.add(n);
+  return n;
+};
+
 const rmCount = 42;
 const rmUsed = new Set();
 const rmRecords = [];
 for (let i = 0; i < rmCount; i++) {
-  let name;
-  do {
-    name = `${pick(surnames)}, ${pick(givens)} ${pick(givens)}`;
-  } while (rmUsed.has(name));
-  rmUsed.add(name);
+  const name = pickName(rmUsed);
   const status = pick(trStatuses);
   // Expiration only when there is a status; expired ones in the past.
   let exp = "";
@@ -225,8 +233,7 @@ const memColumns = memCols.map((h) => { const label = pretty(h); return { key: s
 const memUsed = new Set();
 const memRecords = [];
 for (let i = 0; i < 120; i++) {
-  let name; do { name = `${pick(surnames)}, ${pick(givens)} ${pick(givens)}`; } while (memUsed.has(name));
-  memUsed.add(name);
+  const name = pickName(memUsed);
   const vals = {
     "record.preferred.name": name,
     "record.address.city": pick(["Quezon City", "Caloocan", "Manila", ""]),
