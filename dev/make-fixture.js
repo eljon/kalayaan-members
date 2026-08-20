@@ -221,7 +221,7 @@ console.log(`\nReturned-missionary fixture: ${rmRecords.length} people (sample)`
 const memCols = [
   "record.preferred.name","record.address.city","record.address.country",
   "record.age","record.birthdate","record.baptism.date","record.birth.country","record.gender",
-  "record.priesthood","record.priesthood.office","record.marriage.status",
+  "record.class.assignment","record.priesthood","record.priesthood.office","record.marriage.status",
   "custom-reports.temple.recommend.status","custom-reports.temple.recommend.expiration.date",
   "record.is.returned.missionary","record.head.of.house","record.individual.email","record.callings",
 ];
@@ -254,6 +254,13 @@ for (let i = 0; i < 120; i++) {
       : `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2005 + Math.floor(rand()*20)}`,
     "record.birth.country": "Philippines",
     "record.gender": rand() > 0.5 ? "M" : "F",
+    // Sunday class / quorum, by age band: Primary under 12, a youth
+    // quorum/class at 12-17, an adult class from 18.
+    "record.class.assignment": age < 12
+      ? pick(["Sunbeam", "CTR 6", "CTR 7", "Valiant 8", "Valiant 10", "Valiant 11"])
+      : age <= 17
+        ? pick(["Deacons Quorum", "Teachers Quorum", "Priests Quorum", "Young Women"])
+        : pick(["Gospel Doctrine", "Gospel Principles", "Elders Quorum", "Relief Society"]),
     "record.priesthood": pick(["Melchizedek", "Aaronic", ""]),
     "record.priesthood.office": pick(["Elder", "Priest", "Teacher", "Deacon", ""]),
     "record.marriage.status": pick(["Single", "Married", ""]),
