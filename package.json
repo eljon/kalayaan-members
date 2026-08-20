@@ -11,6 +11,7 @@
     "check": "node dev/check.js && node dev/check-merge.js"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "playwright": "^1.45.0"
   }

@@ -24,6 +24,7 @@ const {
   LoginTimeoutError,
 } = require("./lib/capture");
 const { toCSV } = require("./lib/parse");
+const { buildWorkbook } = require("./lib/xlsx");
 const { version: APP_VERSION } = require("./version");
 
 const PORT = process.env.PORT || 4173;
@@ -330,6 +331,25 @@ app.post("/api/logout", (req, res) => {
     try { fs.rmSync(f, { force: true }); } catch (_) {}
   }
   res.json({ ok: true });
+});
+
+// Build a styled .xlsx from the report the browser serialized (matching the
+// on-screen view and the PDF design) and send it as a download. The client
+// opens it in Google Sheets or Excel. No data is stored server-side.
+app.post("/api/xlsx", express.json({ limit: "8mb" }), async (req, res) => {
+  try {
+    const buf = await buildWorkbook(req.body || {});
+    const name = String((req.body && req.body.filename) || "report")
+      .replace(/[^A-Za-z0-9 _-]+/g, "").trim().slice(0, 80) || "report";
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${name}.xlsx"`);
+    res.send(Buffer.from(buf));
+  } catch (err) {
+    res.status(500).json({ error: "XLSX_FAILED", detail: err.message });
+  }
 });
 
 function openBrowser(url) {
