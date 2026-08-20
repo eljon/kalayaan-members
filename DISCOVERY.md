@@ -194,6 +194,30 @@ Two constraints that came out of the shape:
   interceptor logs its `next-action` header) and set `MONTH_ACTION_ID` (or
   the `LCR_MONTH_ACTION` env var).
 
+  The symptom is unmistakable: the current month still loads (it comes from
+  the passive page load, no action needed) but every earlier month is
+  skipped with `Month NN returned HTTP 404`. To grab the fresh id, sign in
+  to LCR, open the class-and-quorum-attendance report, paste this, then
+  **change the month dropdown once**:
+
+  ```js
+  (() => {
+    const orig = window.fetch;
+    window.fetch = async function (...a) {
+      const id = a[1]?.headers?.["next-action"] || a[1]?.headers?.["Next-Action"];
+      if (id) console.log("%cnext-action id:", "color:lime;font-weight:bold", id);
+      return orig.apply(this, a);
+    };
+    console.log("Armed — change the month dropdown; the action id logs.");
+  })();
+  ```
+
+  Then run the app with `LCR_MONTH_ACTION=<that id> npm start` (or paste it
+  into `MONTH_ACTION_ID` in `lib/capture.js`). If the members report broke
+  in the same deploy, re-observe it too: it is a DOM scrape, so check that
+  its grid still renders and the row/column selectors in `readGridRaw`
+  still match.
+
 Do not guess the parameter name. Observe it. The failure mode of guessing
 is silent: a wrong parameter still returns *a* month, so the pull looks
 like it worked while showing the wrong data.
