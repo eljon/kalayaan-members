@@ -50,3 +50,8 @@ fewest weeks attended. A line graph of weekly attendance (numbers and
 percentages) sits above the roll, added at the owner's request — built as
 inline SVG, **no chart library** (that rule still holds).
 Palette and type stack are in `HANDOFF.md`.
+
+**Never use the eyebrow pattern** — the small uppercase kicker/label stacked
+directly above a heading. The owner dislikes it. Put such context beside or
+below the title (e.g. a meta line under it), never as a label on top. Mind
+type hierarchy generally: the title of a thing is the largest text in it.
