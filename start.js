@@ -24,8 +24,8 @@ function have(mod) {
   }
 }
 
-if (!have("express") || !have("playwright")) {
-  console.log("\n  First run. Installing what the app needs, about a minute.\n");
+if (!have("express") || !have("playwright") || !have("exceljs")) {
+  console.log("\n  Installing what the app needs, about a minute.\n");
   run("npm install");
 }
 
