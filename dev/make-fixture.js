@@ -220,10 +220,10 @@ console.log(`\nReturned-missionary fixture: ${rmRecords.length} people (sample)`
 // A wide custom report like LCR's all-members export. Invented data.
 const memCols = [
   "record.preferred.name","record.address.city","record.address.country",
-  "record.age","record.baptism.date","record.birth.country","record.gender",
+  "record.age","record.birthdate","record.baptism.date","record.birth.country","record.gender",
   "record.priesthood","record.priesthood.office","record.marriage.status",
   "custom-reports.temple.recommend.status","custom-reports.temple.recommend.expiration.date",
-  "record.is.returned.missionary","record.head.of.house","record.individual.email",
+  "record.is.returned.missionary","record.head.of.house","record.individual.email","record.callings",
 ];
 const pretty = (h) => h.includes(".")
   ? h.replace(/^(record|custom-reports)\./, "").replace(/[.\-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
@@ -234,11 +234,18 @@ const memUsed = new Set();
 const memRecords = [];
 for (let i = 0; i < 120; i++) {
   const name = pickName(memUsed);
+  const age = 8 + Math.floor(rand() * 80);
   const vals = {
     "record.preferred.name": name,
     "record.address.city": pick(["Quezon City", "Caloocan", "Manila", ""]),
     "record.address.country": "Philippines",
-    "record.age": String(8 + Math.floor(rand() * 80)),
+    "record.age": String(age),
+    // Birth year consistent with age, so "turns 12 this year" == age >= 12.
+    "record.birthdate": `${pad2(1 + Math.floor(rand()*28))} ${pick(monthName)} ${2026 - age}`,
+    // Under-12s carry a placeholder that the app must override to "(N/A)".
+    "record.callings": age >= 12
+      ? pick(["", "", "Sunday School Teacher", "Ward Clerk", "Primary Teacher", "Elders Quorum Instructor"])
+      : "Primary Child",
     // Most were baptized years ago; a few are recent converts baptized
     // partway through the attendance window, so their attendance denominator
     // is reduced (weeks before baptism don't count).
