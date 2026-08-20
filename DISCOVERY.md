@@ -189,12 +189,17 @@ Two constraints that came out of the shape:
   rather than pulling the wrong year's data. Extending across a year
   boundary needs another observation: change the date range to a
   prior-year month with the interceptor armed and see what carries the year.
-- **The action id is a Next.js internal with no stability guarantee.** When
-  it changes on an LCR deploy, capture a fresh month-switch POST (the
-  interceptor logs its `next-action` header) and set `MONTH_ACTION_ID` (or
-  the `LCR_MONTH_ACTION` env var).
+- **The action id is a Next.js internal with no stability guarantee.** It
+  rotates only when LCR redeploys the code behind this action, which is
+  occasional, not every release. `capture.js` now **self-heals** when it
+  rotates: if a month POST 404s, it drives the live report page's own
+  controls, sniffs the fresh `next-action` id off the resulting request,
+  validates it against a known month, and finishes the pull with it —
+  flagging that it recovered so you can update the pinned id at leisure. The
+  harvest depends on the month control being a native `<select>`; if that
+  ever stops holding, fall back to the manual capture below.
 
-  The symptom is unmistakable: the current month still loads (it comes from
+  The symptom (when self-heal can't recover) is unmistakable: the current month still loads (it comes from
   the passive page load, no action needed) but every earlier month is
   skipped with `Month NN returned HTTP 404`. To grab the fresh id, sign in
   to LCR, open the class-and-quorum-attendance report, paste this, then
