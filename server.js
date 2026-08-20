@@ -18,6 +18,7 @@ const {
   captureReturned,
   captureMembers,
   hasSession,
+  clearSession,
   SessionExpiredError,
   NoSessionError,
   LoginTimeoutError,
@@ -316,6 +317,19 @@ app.get("/api/members.csv", (req, res) => {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="all-members.csv"');
   res.send([header, ...lines].join("\n"));
+});
+
+// Sign out: forget the LCR session and drop every cached report, so the next
+// open starts from a clean sign-in and a fresh, full pull. Use this when a
+// pull is misbehaving on a stale or half-broken session.
+app.post("/api/logout", (req, res) => {
+  if (busy) return res.status(409).json({ error: "BUSY", busy });
+  clearSession();
+  cache = null;
+  for (const f of [CACHE_PATH, RETURNED_PATH, MEMBERS_PATH]) {
+    try { fs.rmSync(f, { force: true }); } catch (_) {}
+  }
+  res.json({ ok: true });
 });
 
 function openBrowser(url) {
