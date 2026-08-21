@@ -194,8 +194,11 @@ Two constraints that came out of the shape:
   occasional, not every release. `capture.js` now **self-heals** when it
   rotates: if a month POST 404s, it drives the live report page's own
   controls, sniffs the fresh `next-action` id off the resulting request,
-  validates it against a known month, and finishes the pull with it —
-  flagging that it recovered so you can update the pinned id at leisure. The
+  validates it against a known month, and finishes the pull with it. The
+  recovered id is written to `lcr-action.json` (gitignored) and used first on
+  the next pull, so the recovery — and its one-time warning — happens once
+  per rotation, not every pull. Resolution order is `LCR_MONTH_ACTION` env
+  var → `lcr-action.json` → the baked-in `DEFAULT_MONTH_ACTION_ID`. The
   harvest depends on the month control being a native `<select>`; if that
   ever stops holding, fall back to the manual capture below.
 

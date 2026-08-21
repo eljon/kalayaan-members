@@ -1,6 +1,9 @@
 # Live authentication cookies. Never commit.
 lcr-session.json
 
+# Locally-remembered LCR month-switch action id (self-heal cache).
+lcr-action.json
+
 # Real membership records. Never commit.
 output/
 
