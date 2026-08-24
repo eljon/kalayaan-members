@@ -27,12 +27,72 @@ const { toCSV } = require("./lib/parse");
 const { buildWorkbook } = require("./lib/xlsx");
 const { version: APP_VERSION } = require("./version");
 
+const crypto = require("crypto");
+
 const PORT = process.env.PORT || 4173;
+const HOST = process.env.HOST || "0.0.0.0";
 const CACHE_PATH = path.join(__dirname, "output", "latest.json");
 const STALE_AFTER = 12 * 60 * 60 * 1000; // suggest a fresh pull after 12h
 const VERSIONS_DIR = path.join(__dirname, "public", "_versions");
+const TOKEN_PATH = path.join(__dirname, "output", ".access-token");
+
+function ensureAccessToken() {
+  fs.mkdirSync(path.dirname(TOKEN_PATH), { recursive: true });
+  try {
+    const t = fs.readFileSync(TOKEN_PATH, "utf8").trim();
+    if (t.length >= 16) return t;
+  } catch (_) {}
+  const t = crypto.randomBytes(24).toString("base64url");
+  fs.writeFileSync(TOKEN_PATH, t + "\n");
+  return t;
+}
+
+const ACCESS_TOKEN = ensureAccessToken();
 
 const app = express();
+
+function parseCookies(header) {
+  const out = {};
+  if (!header) return out;
+  header.split(";").forEach((p) => {
+    const [k, ...v] = p.split("=");
+    out[k.trim()] = decodeURIComponent(v.join("=").trim());
+  });
+  return out;
+}
+
+app.post("/api/auth", express.urlencoded({ extended: false }), (req, res) => {
+  const code = (req.body && req.body.code || "").trim();
+  if (code !== ACCESS_TOKEN) {
+    return res.status(401).send(gatePage("Incorrect access code. Try again."));
+  }
+  res.setHeader("Set-Cookie", `access_token=${ACCESS_TOKEN}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`);
+  res.redirect("/");
+});
+
+function gatePage(error) {
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LCR Pro — Access</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f4f0;color:#1a1a1a}
+.gate{background:#fff;padding:2.5rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:360px;width:90%}
+h1{font-size:1.25rem;margin-bottom:.75rem}p{font-size:.9rem;color:#555;margin-bottom:1.25rem}
+input{width:100%;padding:.6rem .75rem;font-size:1rem;border:1px solid #ccc;border-radius:6px;margin-bottom:1rem}
+button{width:100%;padding:.6rem;font-size:1rem;background:#2F5D50;color:#fff;border:none;border-radius:6px;cursor:pointer}
+button:hover{background:#264d42}.err{color:#8C2F26;font-size:.85rem;margin-bottom:.75rem}</style></head>
+<body><div class="gate"><h1>LCR Pro</h1><p>Enter the access code shown in the terminal where the app is running.</p>
+${error ? '<p class="err">' + error + "</p>" : ""}
+<form method="POST" action="/api/auth"><input name="code" type="password" placeholder="Access code" autofocus autocomplete="off">
+<button type="submit">Continue</button></form></div></body></html>`;
+}
+
+app.use((req, res, next) => {
+  if (req.path === "/api/auth") return next();
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies.access_token || (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  if (token === ACCESS_TOKEN) return next();
+  if (req.path.startsWith("/api/")) return res.status(401).json({ error: "UNAUTHORIZED" });
+  res.status(401).send(gatePage());
+});
 
 // Revert route: /v4 (and /v4/app.js, /v4/style.css) serve an archived
 // front-end so you can go back to an earlier UI. The data API stays
@@ -389,9 +449,21 @@ function openBrowser(url) {
   exec(cmd, () => {});
 }
 
-app.listen(PORT, "127.0.0.1", () => {
+app.listen(PORT, HOST, () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\n  Attendance Roll v${APP_VERSION} is open at ${url}`);
-  console.log("  Leave this window running. Press Control-C to stop.\n");
+  console.log(`\n  LCR Pro v${APP_VERSION} is running on ${HOST}:${PORT}`);
+  console.log(`  Local:   ${url}`);
+  if (HOST === "0.0.0.0") {
+    const nets = require("os").networkInterfaces();
+    for (const iface of Object.values(nets)) {
+      for (const addr of iface) {
+        if (addr.family === "IPv4" && !addr.internal) {
+          console.log(`  Network: http://${addr.address}:${PORT}`);
+        }
+      }
+    }
+  }
+  console.log(`\n  Access code: ${ACCESS_TOKEN}`);
+  console.log("  Enter this code when opening from another device.\n");
   if (!process.env.NO_OPEN) openBrowser(url);
 });
