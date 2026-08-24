@@ -320,6 +320,33 @@ app.get("/api/members.csv", (req, res) => {
   res.send([header, ...lines].join("\n"));
 });
 
+// User preferences — server-side persistence so settings, custom reports,
+// action lists, and check-offs survive across machines and browser resets.
+const PREFS_PATH = path.join(__dirname, "output", "prefs.json");
+
+function readPrefs() {
+  try {
+    if (fs.existsSync(PREFS_PATH)) return JSON.parse(fs.readFileSync(PREFS_PATH, "utf8"));
+  } catch (_) {}
+  return {};
+}
+
+function writePrefs(obj) {
+  fs.mkdirSync(path.dirname(PREFS_PATH), { recursive: true });
+  fs.writeFileSync(PREFS_PATH, JSON.stringify(obj));
+}
+
+app.get("/api/prefs", (req, res) => {
+  res.json(readPrefs());
+});
+
+app.put("/api/prefs", express.json(), (req, res) => {
+  const existing = readPrefs();
+  const merged = { ...existing, ...req.body };
+  writePrefs(merged);
+  res.json(merged);
+});
+
 // Sign out: forget the LCR session and drop every cached report, so the next
 // open starts from a clean sign-in and a fresh, full pull. Use this when a
 // pull is misbehaving on a stale or half-broken session.
