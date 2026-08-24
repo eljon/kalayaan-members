@@ -9,4 +9,4 @@
  * Every release also snapshots the front-end into public/_versions/<n>/,
  * which the server serves at /v<n> so you can revert to an earlier one.
  */
-module.exports = { version: 83 };
+module.exports = { version: 84 };

@@ -72,14 +72,14 @@ app.post("/api/auth", express.urlencoded({ extended: false }), (req, res) => {
 
 function gatePage(error) {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LCR Pro — Access</title>
+<title>Kalayaan Stewardship — Access</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f4f0;color:#1a1a1a}
 .gate{background:#fff;padding:2.5rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:360px;width:90%}
 h1{font-size:1.25rem;margin-bottom:.75rem}p{font-size:.9rem;color:#555;margin-bottom:1.25rem}
 input{width:100%;padding:.6rem .75rem;font-size:1rem;border:1px solid #ccc;border-radius:6px;margin-bottom:1rem}
 button{width:100%;padding:.6rem;font-size:1rem;background:#2F5D50;color:#fff;border:none;border-radius:6px;cursor:pointer}
 button:hover{background:#264d42}.err{color:#8C2F26;font-size:.85rem;margin-bottom:.75rem}</style></head>
-<body><div class="gate"><h1>LCR Pro</h1><p>Enter the access code shown in the terminal where the app is running.</p>
+<body><div class="gate"><h1>Kalayaan Stewardship</h1><p>Enter the access code shown in the terminal where the app is running.</p>
 ${error ? '<p class="err">' + error + "</p>" : ""}
 <form method="POST" action="/api/auth"><input name="code" type="password" placeholder="Access code" autofocus autocomplete="off">
 <button type="submit">Continue</button></form></div></body></html>`;
@@ -451,7 +451,7 @@ function openBrowser(url) {
 
 app.listen(PORT, HOST, () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\n  LCR Pro v${APP_VERSION} is running on ${HOST}:${PORT}`);
+  console.log(`\n  Kalayaan Stewardship v${APP_VERSION} is running on ${HOST}:${PORT}`);
   console.log(`  Local:   ${url}`);
   if (HOST === "0.0.0.0") {
     const nets = require("os").networkInterfaces();
