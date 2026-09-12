@@ -8,7 +8,7 @@
     "server": "node server.js",
     "pull": "node fetch-attendance.js",
     "fixture": "node dev/make-fixture.js",
-    "check": "node dev/check.js && node dev/check-merge.js"
+    "check": "node dev/check.js && node dev/check-merge.js && node dev/check-attending.js"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

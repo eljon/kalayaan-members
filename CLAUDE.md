@@ -25,7 +25,7 @@ shipped `.js` files — the project tree stays lean.
     npm run server      # http://localhost:4173
     npm run check       # regression assertions, exits non-zero on drift
 
-Run `npm run check` after touching `lib/parse.js`.
+Run `npm run check` after touching `lib/parse.js` or any attendance count.
 
 ## Run for real
 
@@ -36,6 +36,11 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
 ## Rules
 
 - `lib/parse.js` is the only parser. Server and CLI both import it. Don't fork it.
+- Somebody with no eligible Sunday in a period — baptized after the last week
+  pulled, or not on the roll — counts as **attending**, never absent. There was
+  nothing for them to miss. `eligibleWeeks()` in `public/app.js` is the only
+  place that rule is written; derive from it rather than re-writing the baptism
+  window. `npm run check` fails if a second copy appears.
 - Never commit `lcr-session.json` (live auth cookies) or `output/` (member records).
 - Never put real member names in the repo. Use the fixture.
 - Server binds to 127.0.0.1 on purpose. Don't expose it.
