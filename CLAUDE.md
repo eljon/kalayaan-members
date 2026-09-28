@@ -16,16 +16,33 @@ one cell per week.
   constraints, roadmap.
 
 Investigative/console snippets live in `DISCOVERY.md` as text, not as
-shipped `.js` files — the project tree stays lean.
+shipped `.js` files — the project tree stays lean. Regression tests are the
+exception and belong in `dev/`: `check*.js` for logic, `ui/` for the
+browser suites.
 
 ## Work offline, no credentials needed
 
     npm install
     npm run fixture     # synthetic data, real shape, real numbers
     npm run server      # http://localhost:4173
-    npm run check       # regression assertions, exits non-zero on drift
+    npm run check       # logic assertions — node only, no browser
+    npm run check:ui    # the interface, in a real browser
 
 Run `npm run check` after touching `lib/parse.js` or any attendance count.
+
+`npm run check:ui` drives Chromium against a running copy of the app and is
+the only thing that sees what is true only once the page has rendered: that
+a column survives onto paper, that a download is named correctly, that
+nothing clickable prints. **Run it after any change to `public/`.** It
+starts its own server, makes the fixture if there is none, and hands
+`output/prefs.json` back afterwards — the suites seed lists and reports as
+they go. The suites are in `dev/ui/` and each runs on its own
+(`node dev/ui/print-report.js`); `dev/ui/harness.js` holds the shared
+launch, sign-in and assertions.
+
+Anything checked only by looking at a screenshot is checked by nothing.
+Add to `dev/ui/` rather than writing a throwaway script somewhere — a
+container reset has already eaten one set of these.
 
 The fixture holds **four** Sundays (July 2026), which reproduces the real
 pull's known-good totals but is shorter than some windows the app measures
