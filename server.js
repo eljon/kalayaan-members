@@ -206,6 +206,11 @@ app.post("/api/refresh", async (req, res) => {
   }
 });
 
+// Downloads are named "<what it is> - Kalayaan Stewardship", the same rule
+// exportName() applies to the ones the browser builds — a file has to stay
+// identifiable once it is sitting in somebody's Downloads folder.
+const csvAttachment = (name) => `attachment; filename="${name} - Kalayaan Stewardship.csv"`;
+
 app.get("/api/export.csv", (req, res) => {
   if (!cache) return res.status(404).send("Nothing pulled yet");
   const rows =
@@ -213,10 +218,7 @@ app.get("/api/export.csv", (req, res) => {
       ? cache.rows.filter((r) => r.total > 0)
       : cache.rows;
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="attendance-${cache.unitNumber}-${cache.fetchedAt.slice(0, 10)}.csv"`
-  );
+  res.setHeader("Content-Disposition", csvAttachment("Attendance"));
   res.send(toCSV(rows, cache.weekOptions));
 });
 
@@ -317,7 +319,7 @@ app.get("/api/returned.csv", (req, res) => {
     RM_FIELDS.map(([key]) => esc(r[key])).join(",")
   );
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", 'attachment; filename="returned-missionaries.csv"');
+  res.setHeader("Content-Disposition", csvAttachment("Returned Missionaries"));
   res.send([header, ...lines].join("\n"));
 });
 
@@ -376,7 +378,7 @@ app.get("/api/members.csv", (req, res) => {
   const header = cols.map((c) => esc(c.label)).join(",");
   const lines = (m.records || []).map((r) => cols.map((c) => esc(r[c.key])).join(","));
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", 'attachment; filename="all-members.csv"');
+  res.setHeader("Content-Disposition", csvAttachment("Members"));
   res.send([header, ...lines].join("\n"));
 });
 
