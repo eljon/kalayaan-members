@@ -27,6 +27,16 @@ shipped `.js` files — the project tree stays lean.
 
 Run `npm run check` after touching `lib/parse.js` or any attendance count.
 
+The fixture holds **four** Sundays (July 2026), which reproduces the real
+pull's known-good totals but is shorter than some windows the app measures
+— 3MOS spans twelve weeks, so on the fixture it necessarily reads the same
+as Attendance. Don't conclude from that that a window is broken, or that it
+works. `dev/check-3mos.js` builds its own twenty-week roll and runs the
+shipped functions against it, which is where that behaviour is actually
+tested. Anything else measuring a span longer than four weeks needs the
+same treatment rather than a longer fixture: lengthening it would cost the
+real-pull anchor `dev/check.js` asserts against.
+
 ## Run for real
 
     npm start
