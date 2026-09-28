@@ -41,6 +41,10 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
   nothing for them to miss. `eligibleWeeks()` in `public/app.js` is the only
   place that rule is written; derive from it rather than re-writing the baptism
   window. `npm run check` fails if a second copy appears.
+- The all-members report is the ward roster. Somebody on the attendance roll
+  who is not in it has left the ward: their name must not appear anywhere, and
+  the counts and the graph follow. `rosterRows()` in `public/app.js` is the one
+  place that filter lives — read roll rows from it, not from `data.rows`.
 - Never commit `lcr-session.json` (live auth cookies) or `output/` (member records).
 - Never put real member names in the repo. Use the fixture.
 - Server binds to 127.0.0.1 on purpose. Don't expose it.
