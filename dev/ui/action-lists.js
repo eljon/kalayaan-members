@@ -25,7 +25,7 @@ h.run("action lists", async (page, t) => {
 
   t.ok(await page.isVisible("#al-none"), "the empty tab shows the invitation");
   t.ok(!(await page.isVisible("#view-actions .cr-builder")), "and hides the builder until there is a list");
-  t.ok(await page.$eval("#actions-tab-badge", (e) => e.hidden), "the tab badge is hidden when there is nothing to action");
+  t.ok(!(await page.$('.tab[data-tab="actions"] .tab-badge')), "the Action Lists tab carries no counter");
 
   await page.click("#al-none-new");
   await page.waitForTimeout(800);
