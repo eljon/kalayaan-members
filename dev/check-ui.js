@@ -34,6 +34,7 @@ const SUITES = [
   "attendance-history", // an attendance figure opens the weeks behind it
   "excluded-weeks",  // a Sunday excluded in Settings leaves every count
   "focus",           // hide and Focus, and the Focus tab
+  "sorting",         // date columns sort by date
   "filenames",       // every download is named "<Report> - Kalayaan Stewardship"
   "print-columns",   // every column survives onto paper
   "print-report",    // a printed report is read, not operated
