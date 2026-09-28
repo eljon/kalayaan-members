@@ -156,6 +156,18 @@ h.run("selection + Focus", async (page, t) => {
     "Visited 12 Sep — invite to ward social", "and its text is there instead");
   await page.emulateMedia({ media: "screen" });
 
+  // "From" follows the list's current name, not the name it had when they
+  // were added.
+  await h.goTab(page, "actions");
+  await page.locator(".al-item .al-open", { hasText: "Named" }).first().click();
+  await page.waitForTimeout(500);
+  await page.fill("#al-name", "Named, renamed");
+  await page.waitForTimeout(600);
+  await page.click('.tab[data-tab="focus"]');
+  await page.waitForTimeout(1200);
+  t.eq((await rowOf(kept).locator(".focus-from").textContent()).trim(), "Named, renamed",
+    "renaming a list renames it in the From column");
+
   // taking somebody off
   await rowOf(picked[0]).locator(".al-act-focus").click();
   await page.waitForTimeout(500);
