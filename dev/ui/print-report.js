@@ -9,12 +9,20 @@
 
 const h = require("./harness");
 
-// Anything a reader could click, type in or toggle. Names are the exception:
-// they are <button> so the screen can open a profile, but on paper a name is
-// just a name — checked separately below that it renders as plain text.
+// The controls: things that draw as something to operate — a field, a
+// dropdown, a button, a switch. None of them may reach the page.
+//
+// This is deliberately a list of chrome, not of `role="button"`. Plenty of
+// the report IS clickable on screen without looking like a control: a name
+// opens a profile, an attendance figure opens that person's weeks, an
+// indicator row opens the people behind the number, a column header sorts.
+// Their whole affordance is a cursor and a hover tint, neither of which
+// exists on paper — so each is checked below for printing as what it says,
+// rather than being caught here for carrying an attribute.
 const INTERACTIVE =
-  "select, input, button:not(.name-link), a[href]:not([href^='#'])," +
-  " .g-seg, .subtab, .g-toggle, .range-bar, .graph-controls";
+  "select, input, textarea, a[href]:not([href^='#']), button:not(.name-link)," +
+  " .btn, .icon-btn, .g-seg, .g-seg-group, .subtab, .g-toggle," +
+  " .range-bar, .graph-controls, .cr-controls, .controls";
 
 const visible = (page, sel) => page.$$eval(sel, (n) => n
   .filter((e) => e.offsetParent !== null || e.getClientRects().length > 0)
@@ -140,6 +148,30 @@ h.run("printed report", async (page, t) => {
   });
   t.ok(nm.border === "0px" && nm.deco === "none",
     `a name prints as plain text, not a control (${JSON.stringify(nm)})`);
+
+  // The affordance on an attendance figure is a hover/focus outline and a
+  // pointer cursor — neither of which exists on paper. What must not appear
+  // is anything that reads as a button when it cannot be pressed.
+  const fig = await page.$eval("#mem-table .att-td .part", (e) => {
+    const cs = getComputedStyle(e);
+    return { outline: cs.outlineStyle, deco: cs.textDecorationLine, border: cs.borderTopWidth };
+  });
+  t.ok(fig.outline === "none" && fig.deco === "none" && fig.border === "0px",
+    `an attendance figure prints as a figure (${JSON.stringify(fig)})`);
+
+  // A sortable column header is a header, not a button.
+  const th = await page.$eval("#mem-table thead th:nth-child(2)", (e) => {
+    const cs = getComputedStyle(e);
+    return { outline: cs.outlineStyle, deco: cs.textDecorationLine };
+  });
+  t.ok(th.outline === "none" && th.deco === "none",
+    `a sortable header prints as a header (${JSON.stringify(th)})`);
+
+  await page.emulateMedia({ media: "screen" });
+  await toPrint(page, "quarterly");
+  const rowBgs = await page.$$eval("#qi-table .qi-clickable",
+    (n) => [...new Set(n.slice(0, 8).map((e) => getComputedStyle(e).backgroundColor))]);
+  t.ok(rowBgs.length === 1, `an indicator row prints as a row (${JSON.stringify(rowBgs)})`);
 
   // Where the pointer happened to be resting is not part of the report.
   await page.emulateMedia({ media: "screen" });

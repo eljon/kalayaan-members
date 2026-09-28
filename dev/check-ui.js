@@ -31,6 +31,7 @@ const SUITES = [
   "action-lists",    // nothing is pre-built; every list behaves the same
   "columns",         // the column-picker search, in both pickers
   "three-months",    // the 3MOS column, in the interface
+  "attendance-history", // an attendance figure opens the weeks behind it
   "filenames",       // every download is named "<Report> - Kalayaan Stewardship"
   "print-columns",   // every column survives onto paper
   "print-report",    // a printed report is read, not operated
