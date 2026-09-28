@@ -65,6 +65,9 @@ ROLL.Newcomer = WEEKS.map((_, i) => i > LAST - 2);
 
 const build = (weekNums) => new Function(
   "attIndex", "attendanceFor", "baptismDateOf", "attendanceTier", "weekCount",
+  // The Settings opt-out, with nothing excluded — this file is about the
+  // twelve-week window, not about which Sundays somebody ticked off.
+  "isExcludedWeek",
   `const MOS3_WEEKS = ${SPAN};\n` + eligibleSrc + recentSrc + infoSrc +
   "\nreturn { eligibleWeeks, recentRange, attendanceInfoRange };"
 )(
@@ -73,6 +76,7 @@ const build = (weekNums) => new Function(
   (name) => BAPTISED[name],
   (pct) => (pct <= 0 ? "p0" : pct <= 25 ? "p25" : pct < 50 ? "p50" : "p100"),
   () => weekNums.length,
+  () => false,
 );
 
 // ---------------------------------------------------- twenty weeks of roll

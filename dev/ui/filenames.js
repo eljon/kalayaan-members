@@ -17,8 +17,12 @@ const DEFAULTS = {
 };
 
 h.seed({ listName: "Everyone" });
+// Focus starts empty and an empty report has nothing to download, so it is
+// covered by focus.js once somebody is in it, not here.
+const TABS = h.TABS.filter((x) => x !== "focus");
+
 h.run("download filenames", async (page, t) => {
-  for (const tab of h.TABS) {
+  for (const tab of TABS) {
     await h.goTab(page, tab);
     const want = DEFAULTS[tab];
 
@@ -36,7 +40,7 @@ h.run("download filenames", async (page, t) => {
     window.__titles = [];
     window.print = () => { window.__titles.push(document.title); };
   });
-  for (const tab of h.TABS) {
+  for (const tab of TABS) {
     await h.goTab(page, tab, 500);
     await page.click("#" + h.PDF_BTN[tab]);
     await page.waitForTimeout(900);

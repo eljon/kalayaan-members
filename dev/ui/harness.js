@@ -77,6 +77,8 @@ function seed(opts) {
       }]
     : opts.lists;
   p.actionDone = {};
+  if (opts.focus !== false) p.focus = [];
+  if (opts.excluded !== false) p.excludedWeeks = [];
   if (opts.reports !== false) p.customReports = {};
   if (opts.sorts !== false) p.sort = {};
   writePrefs(p);
@@ -135,15 +137,16 @@ function run(name, body, opts) {
 
 // Ids and readiness selectors, so a suite can loop over the tabs without
 // repeating the map five times.
-const TABS = ["attendance", "returned", "members", "custom", "actions", "quarterly"];
+const TABS = ["attendance", "returned", "members", "custom", "actions", "focus", "quarterly"];
 const READY = {
   attendance: "#roll-body .roll-row", returned: "#rm-table tbody tr", members: "#mem-table tbody tr",
-  custom: "#cr-table tbody tr", actions: "#al-table tbody tr", quarterly: "#qi-table tbody tr",
+  custom: "#cr-table tbody tr", actions: "#al-table tbody tr", focus: "#view-focus .cr-builder",
+  quarterly: "#qi-table tbody tr",
 };
-const PDF_BTN = { attendance: "att-pdf", returned: "rm-pdf", members: "mem-pdf", custom: "cr-pdf", actions: "al-pdf", quarterly: "qi-pdf" };
-const CSV_BTN = { attendance: "export", returned: "rm-export", members: "mem-export", custom: "cr-export", actions: "al-export" };
-const SHEET_BTN = { attendance: "att-sheet", returned: "rm-sheet", members: "mem-sheet", custom: "cr-sheet", actions: "al-sheet", quarterly: "qi-sheet" };
-const TABLE = { returned: "rm-table", members: "mem-table", custom: "cr-table", actions: "al-table", quarterly: "qi-table" };
+const PDF_BTN = { attendance: "att-pdf", returned: "rm-pdf", members: "mem-pdf", custom: "cr-pdf", actions: "al-pdf", focus: "focus-pdf", quarterly: "qi-pdf" };
+const CSV_BTN = { attendance: "export", returned: "rm-export", members: "mem-export", custom: "cr-export", actions: "al-export", focus: "focus-export" };
+const SHEET_BTN = { attendance: "att-sheet", returned: "rm-sheet", members: "mem-sheet", custom: "cr-sheet", actions: "al-sheet", focus: "focus-sheet", quarterly: "qi-sheet" };
+const TABLE = { returned: "rm-table", members: "mem-table", custom: "cr-table", actions: "al-table", focus: "focus-table", quarterly: "qi-table" };
 
 async function goTab(page, tab, wait) {
   await page.click(`.tab[data-tab="${tab}"]`);

@@ -47,9 +47,9 @@ h.run("action lists", async (page, t) => {
 
   const rows = await page.$$eval("#al-table tbody tr", (n) => n.length);
   t.ok(rows > 0, `a new list shows everyone until narrowed (${rows})`);
-  await page.click("#al-table tbody tr:first-child .al-done-td input");
+  await page.click("#al-table tbody tr:first-child .al-act-hide");
   await page.waitForTimeout(500);
-  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), rows - 1, "checking off removes the row");
+  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), rows - 1, "hiding removes the row");
 
   // A reload re-reads the saved prefs, which is where a pre-built list would
   // have come back from.

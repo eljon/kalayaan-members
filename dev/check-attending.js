@@ -32,10 +32,12 @@ if (i < 0) fails.push("eligibleWeeks() is gone — the eligibility rule has no h
 const body = src.slice(i, src.indexOf("\n  }\n", i) + 4);
 // Sundays 05 Jul .. 26 Jul 2026, the shape the roll has.
 const WEEKS = [20260705, 20260712, 20260719, 20260726];
+// isExcludedWeek() is the Settings opt-out; with nothing excluded it is
+// false for every week, which is what this file is about.
 const eligibleWeeks = new Function(
-  "attIndex",
+  "attIndex", "isExcludedWeek",
   body + "\nreturn eligibleWeeks;"
-)(() => ({ weekNums: WEEKS }));
+)(() => ({ weekNums: WEEKS }), () => false);
 
 const full = { start: 0, end: WEEKS.length - 1 };
 eq("nobody baptized: every week is eligible", eligibleWeeks(null, full), [0, 1, 2, 3]);
