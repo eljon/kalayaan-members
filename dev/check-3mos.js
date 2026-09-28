@@ -63,10 +63,10 @@ const ROLL = {
 const BAPTISED = { Always: null, EarlyOnly: null, Never: null, Newcomer: WEEKS[LAST - 2] };
 ROLL.Newcomer = WEEKS.map((_, i) => i > LAST - 2);
 
-const build = (weekNums) => new Function(
+// `excluded` is the set of week indices ticked off in Settings; empty unless
+// a case is about exclusion.
+const build = (weekNums, excluded) => new Function(
   "attIndex", "attendanceFor", "baptismDateOf", "attendanceTier", "weekCount",
-  // The Settings opt-out, with nothing excluded — this file is about the
-  // twelve-week window, not about which Sundays somebody ticked off.
   "isExcludedWeek",
   `const MOS3_WEEKS = ${SPAN};\n` + eligibleSrc + recentSrc + infoSrc +
   "\nreturn { eligibleWeeks, recentRange, attendanceInfoRange };"
@@ -76,7 +76,7 @@ const build = (weekNums) => new Function(
   (name) => BAPTISED[name],
   (pct) => (pct <= 0 ? "p0" : pct <= 25 ? "p25" : pct < 50 ? "p50" : "p100"),
   () => weekNums.length,
-  () => false,
+  (i) => !!(excluded && excluded.has(i)),
 );
 
 // ---------------------------------------------------- twenty weeks of roll
@@ -136,10 +136,26 @@ const build = (weekNums) => new Function(
      ["4/4 100%", "4/4 100%"]);
 }
 
+// ------------------------------------------- excluded Sundays inside the window
+// A Sunday excluded in Settings is not one of the twelve. The window reaches
+// back one week further for each, so 3MOS is always twelve weeks of meetings.
+{
+  const { recentRange, attendanceInfoRange } = build(WEEKS, new Set([15, 17]));
+  const full = { start: 0, end: LAST };
+  eq("two excluded Sundays in the window: it starts two weeks earlier",
+     recentRange(full), { start: 6, end: 19 });
+  eq("and still measures twelve", attendanceInfoRange("Always", recentRange(full)).text, "12/12 100%");
+  const { recentRange: rr2 } = build(WEEKS, new Set([2]));
+  eq("an excluded Sunday outside the window changes nothing", rr2(full), { start: 8, end: 19 });
+  const { recentRange: rr3 } = build(WEEKS.slice(-5), new Set([4]));
+  eq("a short roll with an exclusion still clamps to what was pulled",
+     rr3({ start: 0, end: 4 }), { start: 0, end: 4 });
+}
+
 // ------------------------------------------------ one window, written once
 // recentRange() is where the twelve-week span lives. A second place that
 // counts back by MOS3_WEEKS is a copy waiting to disagree with it.
-const spans = src.match(/MOS3_WEEKS\s*-\s*1/g) || [];
+const spans = src.match(/counted\s*===\s*MOS3_WEEKS/g) || [];
 if (spans.length !== 1) {
   fails.push(
     `the 3MOS window is computed ${spans.length} times, expected 1 (inside recentRange) ` +
