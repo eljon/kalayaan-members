@@ -81,15 +81,16 @@ h.run("smoke", async (page, t) => {
   t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore - 1, "hiding one removes it");
   await page.click("#al-showdone");
   await page.waitForTimeout(600);
-  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore, "Show hidden brings it back");
+  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), 1, "Show hidden shows only the hidden one");
   // Unhide while Show hidden is still on, or the tick lands on somebody else
   // and each run leaves another person hidden.
   await page.check("#al-table tr.al-row-done .al-done-td input");
   await page.click("#al-bulk-unhide");
   await page.waitForTimeout(600);
-  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore, "unhiding restores the list");
+  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), 0, "unhiding empties the hidden view");
   await page.click("#al-showdone");
   await page.waitForTimeout(400);
+  t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore, "and the person is back on the list");
 
   // --- quarterly: the indicators, and the drill-down's three scopes ---
   await h.goTab(page, "quarterly");

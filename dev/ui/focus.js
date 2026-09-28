@@ -85,6 +85,9 @@ h.run("selection + Focus", async (page, t) => {
 
   await page.check("#al-showdone");
   await page.waitForTimeout(500);
+  const shownHidden = await page.$$eval("#al-table tbody .name-link", (n) => n.map((e) => e.textContent.trim()));
+  t.eq(JSON.stringify(shownHidden), JSON.stringify([hideName]), "Show hidden lists only the hidden names");
+  t.eq((await page.textContent("#al-count")).trim(), "1 hidden", "and counts them");
   await page.check("#al-table tr.al-row-done .al-done-td input");
   t.ok(await page.isVisible("#al-bulk-unhide"), "a hidden row offers Unhide");
   await page.click("#al-bulk-unhide");
