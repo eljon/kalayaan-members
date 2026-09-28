@@ -75,15 +75,17 @@ h.run("smoke", async (page, t) => {
   t.ok(await page.isVisible("#al-columns"), "action list column picker opens");
   await page.click("#al-columns-btn");
 
-  await page.click("#al-table tbody tr:first-child .al-act-hide");
+  await page.check("#al-table tbody tr:first-child .al-done-td input");
+  await page.click("#al-bulk-hide");
   await page.waitForTimeout(600);
   t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore - 1, "hiding one removes it");
   await page.click("#al-showdone");
   await page.waitForTimeout(600);
   t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore, "Show hidden brings it back");
-  // Unhide while Show hidden is still on, or the click lands on somebody else
+  // Unhide while Show hidden is still on, or the tick lands on somebody else
   // and each run leaves another person hidden.
-  await page.click("#al-table tr.al-row-done .al-act-hide");
+  await page.check("#al-table tr.al-row-done .al-done-td input");
+  await page.click("#al-bulk-unhide");
   await page.waitForTimeout(600);
   t.eq(await page.$$eval("#al-table tbody tr", (n) => n.length), alBefore, "unhiding restores the list");
   await page.click("#al-showdone");
