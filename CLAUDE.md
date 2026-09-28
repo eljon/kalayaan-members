@@ -64,7 +64,10 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
 
 - `lib/parse.js` is the only parser. Server and CLI both import it. Don't fork it.
 - Somebody with no eligible Sunday in a period — baptized after the last week
-  pulled, or not on the roll — counts as **attending**, never absent. There was
+  pulled, or not on the roll — counts as **attending**, never absent.
+  Attendance *before* baptism still counts (children of record attend
+  Primary): a pre-baptism Sunday is eligible if they were present, and only
+  a pre-baptism absence is left out. There was
   nothing for them to miss. `eligibleWeeks()` in `public/app.js` is the only
   place that rule is written; derive from it rather than re-writing the baptism
   window. `npm run check` fails if a second copy appears.

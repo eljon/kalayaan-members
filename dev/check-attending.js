@@ -50,6 +50,19 @@ eq("baptized on the last week: no eligible Sunday", eligibleWeeks(20260726, full
 eq("a sub-range narrows it", eligibleWeeks(null, { start: 1, end: 2 }), [1, 2]);
 eq("range clamps to the weeks held", eligibleWeeks(null, { start: -5, end: 99 }), [0, 1, 2, 3]);
 
+// Attendance before baptism counts — a child of record is in Primary before
+// being baptized, and that is real attendance. Only a pre-baptism ABSENCE is
+// left out, because it was never a Sunday they were expected at.
+const was = (...on) => WEEKS.map((_, k) => on.includes(k));
+eq("baptized mid-period, present before it: that Sunday counts",
+   eligibleWeeks(20260712, full, was(0)), [0, 2, 3]);
+eq("baptized mid-period, absent before it: still left out",
+   eligibleWeeks(20260712, full, was(2)), [2, 3]);
+eq("not yet baptized but attending: every Sunday present counts",
+   eligibleWeeks(20260906, full, was(1, 3)), [1, 3]);
+eq("not yet baptized and never came: still nothing to miss",
+   eligibleWeeks(20260906, full, was()), []);
+
 // --- and that it stays the only implementation -----------------------------
 // The baptism window is a date compared against a week. Written once, inside
 // eligibleWeeks; anywhere else is a second copy waiting to disagree with it.
