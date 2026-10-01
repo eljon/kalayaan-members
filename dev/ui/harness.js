@@ -77,7 +77,7 @@ function seed(opts) {
       }]
     : opts.lists;
   p.actionDone = {};
-  if (opts.focus !== false) p.focus = [];
+  if (opts.focus !== false) { p.focus = []; p.focusColumns = []; }
   if (opts.excluded !== false) p.excludedWeeks = [];
   if (opts.reports !== false) p.customReports = {};
   if (opts.sorts !== false) p.sort = {};

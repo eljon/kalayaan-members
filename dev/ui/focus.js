@@ -171,6 +171,46 @@ h.run("selection + Focus", async (page, t) => {
   t.eq((await rowOf(kept).locator(".focus-from").textContent()).trim(), "Named, renamed",
     "renaming a list renames it in the From column");
 
+  // ---- Choose columns ------------------------------------------------------
+  // Focus starts with its own columns only; any member-report column can be
+  // added with the same picker the reports use.
+  const headsNow = () => page.$$eval("#focus-table thead th", (n) => n.map((e) => e.textContent.trim()));
+  t.ok(!(await headsNow()).includes("Birthday"), "no member columns until somebody adds them");
+  await page.click("#focus-columns-btn");
+  await page.waitForSelector("#focus-columns .cr-col-find");
+  await page.fill("#focus-columns .cr-col-find", "birth");
+  await page.waitForTimeout(250);
+  await page.locator("#focus-columns .cr-col", { hasText: "Birthday" }).locator("input").check();
+  await page.waitForTimeout(500);
+  const withCol = await headsNow();
+  t.ok(withCol.includes("Birthday"), `ticking a column adds it to Focus ${JSON.stringify(withCol)}`);
+  const bi = withCol.indexOf("Birthday");
+  t.ok(bi > withCol.indexOf("3MOS") && bi < withCol.indexOf("From"), "between the attendance figures and From");
+  const bdays = await page.$$eval("#focus-table tbody tr", (rows, i) => rows.map((r) => r.children[i].textContent.trim()), bi);
+  t.ok(bdays.every((v) => /\d{2} \w{3} \d{4}|—/.test(v)), `and fills in each person's value ${JSON.stringify(bdays)}`);
+
+  // it sorts as dates
+  await page.click(`#focus-table thead th:nth-child(${bi + 1})`);
+  await page.waitForTimeout(500);
+  const MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  const dn = (v) => { const m = /^(\d{2}) (\w{3}) (\d{4})$/.exec(v); return m ? +m[3] * 1e4 + MON[m[2].toLowerCase()] * 100 + +m[1] : null; };
+  const sortedB = (await page.$$eval("#focus-table tbody tr", (rows, i) => rows.map((r) => r.children[i].textContent.trim()), bi))
+    .map(dn).filter((x) => x != null);
+  t.ok(sortedB.every((d, i) => i === 0 || sortedB[i - 1] <= d), "an added date column sorts by date");
+
+  const csv2 = await page.evaluate(() => new Promise((res) => {
+    const orig = URL.createObjectURL;
+    URL.createObjectURL = (b) => { b.text().then(res); URL.createObjectURL = orig; return orig.call(URL, b); };
+    document.getElementById("focus-export").click();
+  }));
+  t.ok(csv2.split("\n")[0].includes("Birthday"), "and goes into the CSV");
+
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(1200);
+  await page.click('.tab[data-tab="focus"]');
+  await page.waitForTimeout(1500);
+  t.ok((await headsNow()).includes("Birthday"), "the choice survives a reload");
+
   // taking somebody off
   await rowOf(picked[0]).locator(".al-act-focus").click();
   await page.waitForTimeout(500);
