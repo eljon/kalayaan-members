@@ -161,6 +161,7 @@ async function downloadName(page, act) {
 }
 
 module.exports = {
+  chromiumPath,
   BASE, ROOT, TABS, READY, PDF_BTN, CSV_BTN, SHEET_BTN, TABLE,
   blocked, seed, open, run, goTab, downloadName, readPrefs, writePrefs,
 };

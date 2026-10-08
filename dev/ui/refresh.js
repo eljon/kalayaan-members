@@ -13,8 +13,10 @@ const h = require("./harness");
 
 const roll = JSON.parse(fs.readFileSync(path.join(h.ROOT, "output", "latest.json"), "utf8"));
 const mem = JSON.parse(fs.readFileSync(path.join(h.ROOT, "output", "members.json"), "utf8"));
-const roll2 = { ...roll, rows: roll.rows.slice(0, roll.rows.length - 30) };
-const mem2 = { ...mem, records: mem.records.slice(0, mem.records.length - 20) };
+// A pull "made" at a distinctive time, so the stamp can be checked against it.
+const PULLED = "2026-10-08T14:37:00.000Z";
+const roll2 = { ...roll, rows: roll.rows.slice(0, roll.rows.length - 30), fetchedAt: PULLED };
+const mem2 = { ...mem, records: mem.records.slice(0, mem.records.length - 20), fetchedAt: PULLED, sample: false };
 const WANT_MEM = mem2.records.length;
 
 // The roll lists the roster — roll rows still in the membership records — so
@@ -39,6 +41,7 @@ const counts = (page) => page.evaluate(() => ({
 
 let refreshed = false;
 const pulls = [];
+let membersBusyOnce = true;   // the first forced members pull finds the server busy
 
 h.seed();
 h.run("refresh repaints everything", async (page, t) => {
@@ -70,6 +73,13 @@ h.run("refresh repaints everything", async (page, t) => {
   await page.waitForTimeout(4000);
   t.ok(pulls.includes("roll") && pulls.includes("members"),
     `one click pulled every report: ${JSON.stringify(pulls)}`);
+  t.ok(pulls.indexOf("busy") >= 0 && pulls.indexOf("busy") < pulls.indexOf("members"),
+    "a busy server is waited out, not taken as the answer");
+  t.ok(await page.isHidden("#curtain"), "and no error is shown for it");
+
+  // The stamp shows the time of the pull just made, for the report on screen.
+  const want = new Date(PULLED).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  t.eq((await page.textContent("#stamp")).trim(), "Pulled " + want, "the Pulled line shows the new time");
 
   // Every view is current WITHOUT being visited.
   const after = await counts(page);
@@ -98,7 +108,13 @@ h.run("refresh repaints everything", async (page, t) => {
       const u = route.request().url();
       const json = (body) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
       if (refreshed && /\/api\/refresh/.test(u)) { pulls.push("roll"); return json(roll2); }
-      if (refreshed && /\/api\/members/.test(u)) { pulls.push("members"); return json(mem2); }
+      if (refreshed && /\/api\/members/.test(u)) {
+        // The collision that used to lose a refresh: the click lands while
+        // another pull is still running. It must wait and try again.
+        if (membersBusyOnce) { membersBusyOnce = false; pulls.push("busy");
+          return route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "BUSY", busy: "pull" }) }); }
+        pulls.push("members"); return json(mem2);
+      }
       if (refreshed && /\/api\/data/.test(u)) return json(roll2);
       return route.continue();
     });

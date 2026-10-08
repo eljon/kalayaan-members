@@ -244,13 +244,15 @@ function readReturned() {
 app.get("/api/returned", async (req, res) => {
   console.error(`[api] /api/returned hit (force=${req.query.force || "0"})`);
   const cached = readReturned();
-  if (cached && !cached.sample && req.query.force !== "1") return res.json(cached);
+  const forced = req.query.force === "1";
+  if (cached && !cached.sample && !forced) return res.json(cached);
+  // As with members: a forced pull reports what happened, never the old copy.
   if (!hasSession()) {
-    if (cached) return res.json(cached);
+    if (cached && !forced) return res.json(cached);
     return res.status(401).json({ error: "SESSION_EXPIRED" });
   }
   if (busy) {
-    if (cached) return res.json(cached);
+    if (cached && !forced) return res.json(cached);
     return res.status(409).json({ error: "BUSY", busy });
   }
   busy = "pull";
@@ -263,8 +265,8 @@ app.get("/api/returned", async (req, res) => {
   } catch (err) {
     if (err instanceof NoSessionError || err instanceof SessionExpiredError) {
       res.status(401).json({ error: "SESSION_EXPIRED" });
-    } else if (cached) {
-      res.json(cached); // stale beats nothing
+    } else if (cached && !forced) {
+      res.json(cached); // stale beats nothing — but not when Refresh was pressed
     } else {
       res.status(500).json({ error: "PULL_FAILED", detail: err.message });
     }
@@ -337,13 +339,18 @@ function readMembers() {
 app.get("/api/members", async (req, res) => {
   console.error(`[api] /api/members hit (force=${req.query.force || "0"})`);
   const cached = readMembers();
-  if (cached && !cached.sample && req.query.force !== "1") return res.json(cached);
+  const forced = req.query.force === "1";
+  if (cached && !cached.sample && !forced) return res.json(cached);
+  // A forced pull is somebody pressing Refresh. Handing back the old copy
+  // with a 200 told them it had worked when nothing had been read — so a
+  // forced pull reports what actually happened instead. Only an ordinary
+  // load (opening the tab) falls back to the copy on disk.
   if (!hasSession()) {
-    if (cached) return res.json(cached);
+    if (cached && !forced) return res.json(cached);
     return res.status(401).json({ error: "SESSION_EXPIRED" });
   }
   if (busy) {
-    if (cached) return res.json(cached);
+    if (cached && !forced) return res.json(cached);
     return res.status(409).json({ error: "BUSY", busy });
   }
   busy = "pull";
@@ -356,7 +363,7 @@ app.get("/api/members", async (req, res) => {
   } catch (err) {
     if (err instanceof NoSessionError || err instanceof SessionExpiredError) {
       res.status(401).json({ error: "SESSION_EXPIRED" });
-    } else if (cached) {
+    } else if (cached && !forced) {
       res.json(cached);
     } else {
       res.status(500).json({ error: "PULL_FAILED", detail: err.message });
