@@ -1,0 +1,21 @@
+# Deploy the app to Fly.io from GitHub — no computer needed. CLOUD.md, step 8.
+#
+# Runs only when you press "Run workflow" on GitHub (Actions tab → Deploy to
+# Fly.io), and only with the FLY_API_TOKEN secret set. Pick the branch to
+# deploy in the "Run workflow" box.
+name: Deploy to Fly.io
+
+on:
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

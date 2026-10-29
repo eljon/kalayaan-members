@@ -39,8 +39,75 @@
   };
   let _srvPrefs = null;
 
+  // ------------------------------------------------------- offline copy
+  // public/sw.js keeps the app and its latest data on this device. When an
+  // answer comes from that copy rather than the server it is marked with
+  // when it was saved; note the oldest, and say so at the top of the page.
+  let offlineSince = null;
+  const _fetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const res = await _fetch(...args);
+    const saved = res.headers && res.headers.get("x-from-cache");
+    if (saved != null) {
+      const t = saved ? new Date(saved) : null;
+      if (!offlineSince || (t && t < offlineSince)) offlineSince = t || offlineSince || new Date(0);
+      showOffline();
+    }
+    return res;
+  };
+  function showOffline() {
+    const bar = document.getElementById("offline-bar");
+    if (!bar) return;
+    const off = !navigator.onLine || offlineSince;
+    bar.hidden = !off;
+    if (!off) return;
+    const when = offlineSince && offlineSince.getTime() > 0
+      ? offlineSince.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+      : "your last visit";
+    bar.textContent = `Offline — showing what this device saved on ${when}. ` +
+      "Changes you make are kept here and sent when you're back online.";
+    const btn = document.getElementById("refresh");
+    if (btn) { btn.disabled = true; btn.title = "Refresh needs a connection"; }
+  }
+  window.addEventListener("offline", showOffline);
+  window.addEventListener("online", async () => {
+    offlineSince = null;
+    const bar = document.getElementById("offline-bar");
+    if (bar) bar.hidden = true;
+    const btn = document.getElementById("refresh");
+    if (btn) { btn.disabled = false; btn.title = ""; }
+    await flushPendingPrefs();
+  });
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
+
+  // Edits made with no connection: the value is already in localStorage
+  // (every save writes there first); remember WHICH keys still owe the
+  // server a copy, and send them once it can be reached.
+  const PENDING_LS = "kalayaan:pendingPrefs";
+  const pendingKeys = () => { try { return JSON.parse(localStorage.getItem(PENDING_LS)) || []; } catch (_) { return []; } };
+  const setPending = (keys) => { try { localStorage.setItem(PENDING_LS, JSON.stringify([...new Set(keys)])); } catch (_) {} };
+  async function flushPendingPrefs() {
+    const keys = pendingKeys();
+    if (!keys.length) return;
+    const body = {};
+    for (const k of keys) {
+      try { const v = JSON.parse(localStorage.getItem(PREF_LS[k])); if (v != null) body[k] = v; } catch (_) {}
+    }
+    try {
+      const res = await _fetch("/api/prefs", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok) setPending([]);
+    } catch (_) { /* still offline; try again next time */ }
+  }
+
   async function initPrefs() {
     try { _srvPrefs = await (await fetch("/api/prefs")).json(); } catch (_) { _srvPrefs = {}; }
+    // Anything edited here while offline is newer than the server's copy.
+    for (const k of pendingKeys()) {
+      try { const v = JSON.parse(localStorage.getItem(PREF_LS[k])); if (v != null) _srvPrefs[k] = v; } catch (_) {}
+    }
+    if (navigator.onLine) flushPendingPrefs();
     let dirty = false;
     for (const [key, lsKey] of Object.entries(PREF_LS)) {
       if (_srvPrefs[key] === undefined) {
@@ -73,11 +140,12 @@
     _srvPrefs[key] = value;
     const lsKey = PREF_LS[key];
     if (lsKey) try { localStorage.setItem(lsKey, JSON.stringify(value)); } catch (_) {}
-    fetch("/api/prefs", {
+    const owe = () => setPending(pendingKeys().concat([key]));
+    _fetch("/api/prefs", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [key]: value }),
-    }).catch(() => {});
+    }).then((r) => { if (!r.ok) owe(); }).catch(owe);
   }
 
   function loadSorts() { return _loadPref("sort", {}); }
@@ -1689,6 +1757,7 @@
 
     await initPrefs();
     await loadWhoami();
+    showOffline();
     // Re-apply settings from server (handles cross-machine sync)
     const ss = loadSettings();
     applyTheme(ss.theme);
@@ -1751,6 +1820,82 @@
     const so = $("set-signout-row");
     if (so) so.hidden = !whoami.owner;
   }
+  // ---------------------------------------------- LCR sign-in, inside the app
+  // The server opens LCR's sign-in out of sight and this shows it: a picture
+  // of the page, refreshed continuously, with taps and typing sent back. It
+  // never knows what the page holds — only when the sign-in has finished.
+  let relayTimer = null;
+  async function relaySignIn() {
+    const modal = $("lcr-modal"), img = $("lcr-frame"), meta = $("lcr-meta");
+    raise();
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    meta.textContent = "Opening LCR's sign-in page…";
+    img.removeAttribute("src");
+    let st;
+    try {
+      st = await (await fetch("/api/login-relay/start", { method: "POST" })).json();
+    } catch (_) { st = { state: "failed", message: "The app could not reach its server." }; }
+    if (st.state === "failed" || st.error) return relayEnd(st.message || "The sign-in could not be started.");
+    meta.textContent = "Tap a field on the page, type in the box below, and press Send.";
+    let lastUrl = null;
+    const tick = async () => {
+      try {
+        const r = await fetch("/api/login-relay/frame?" + Date.now());
+        if (r.status === 200) {
+          const url = URL.createObjectURL(await r.blob());
+          img.src = url;
+          if (lastUrl) URL.revokeObjectURL(lastUrl);
+          lastUrl = url;
+        }
+        const s2 = await (await fetch("/api/login-relay/status")).json();
+        if (s2.state === "saving") meta.textContent = "Signed in — keeping the session…";
+        if (s2.state === "done") return relayEnd(null);
+        if (s2.state === "failed" || s2.state === "timeout" || s2.state === "none") return relayEnd(s2.message || "The sign-in stopped.");
+      } catch (_) { /* a missed frame is fine; the next one comes */ }
+      relayTimer = setTimeout(tick, 600);
+    };
+    tick();
+  }
+  async function relaySend(body) {
+    try {
+      await fetch("/api/login-relay/input", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      });
+    } catch (_) {}
+  }
+  function relayEnd(problem) {
+    clearTimeout(relayTimer);
+    $("lcr-modal").hidden = true;
+    document.body.classList.remove("modal-open");
+    if (problem) return curtain("Sign-in did not finish", problem, "Try again", relaySignIn);
+    refreshAll();
+  }
+  (function wireRelay() {
+    const img = $("lcr-frame");
+    if (!img) return;
+    img.addEventListener("click", (e) => {
+      const r = img.getBoundingClientRect();
+      relaySend({ tap: { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height } });
+      $("lcr-text").focus();
+    });
+    $("lcr-type").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t = $("lcr-text");
+      if (t.value) relaySend({ type: t.value });
+      t.value = "";
+    });
+    document.querySelectorAll("#lcr-modal [data-key]").forEach((b) =>
+      b.addEventListener("click", () => relaySend({ press: b.dataset.key })));
+    document.querySelectorAll("#lcr-modal [data-scroll]").forEach((b) =>
+      b.addEventListener("click", () => relaySend({ scroll: +b.dataset.scroll })));
+    $("lcr-close").addEventListener("click", async () => {
+      clearTimeout(relayTimer);
+      await fetch("/api/login-relay/cancel", { method: "POST" }).catch(() => {});
+      relayEnd("You cancelled the sign-in.");
+    });
+  })();
+
   function needsHostSignIn(title) {
     curtain(
       title,
@@ -1764,6 +1909,15 @@
 
   function askSignIn() {
     if (!whoami.canSignIn) return needsHostSignIn("The app is not signed in to LCR");
+    if (whoami.signIn === "relay") {
+      return curtain(
+        "Sign in to LCR",
+        "LCR's sign-in page opens here, inside the app. Sign in the way you normally do, " +
+          "including the code sent to your phone. The roll fills in once you're through.",
+        "Sign in to LCR",
+        relaySignIn
+      );
+    }
     curtain(
       "Sign in to LCR",
       "A browser window will open. Sign in the way you normally do, including any code sent to your phone. " +
@@ -1828,6 +1982,14 @@
 
   function sessionGone() {
     if (!whoami.canSignIn) return needsHostSignIn("The app's LCR sign-in has expired");
+    if (whoami.signIn === "relay") {
+      return curtain(
+        "Your LCR sign-in expired",
+        "Sign-ins last a few days. Sign in again here and the roll refreshes itself.",
+        "Sign in to LCR",
+        relaySignIn
+      );
+    }
     curtain(
       "Your LCR session expired",
       "Sessions last a few days. Sign in again and the roll will refresh itself.",
@@ -1928,6 +2090,9 @@
 
       renderEverything();
       renderStamp();
+      // The roll came back from a POST, which the offline copy does not keep;
+      // read it once more so the copy on this device is today's.
+      if (!failed.length && !expired) fetch("/api/data").catch(() => {});
 
       if (expired && !opts.quiet) sessionGone();
       else if (failed.length && !opts.quiet) {
@@ -4878,6 +5043,16 @@
   $("sort").addEventListener("change", () => { saveSort("attendance", $("sort").value); renderBody(); });
   $("hide-absent").addEventListener("change", renderBody);
   $("refresh").addEventListener("click", () => refreshAll());
+  $("clear-device-btn").addEventListener("click", async () => {
+    if (!confirm("Remove everything this app has saved on this device?\n\nThe roll, member details, and any changes not yet sent are deleted from this device only. The app itself is not affected.")) return;
+    try {
+      for (const k of await caches.keys()) await caches.delete(k);
+      const regs = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+      for (const r of regs) await r.unregister();
+    } catch (_) {}
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith("kalayaan:")) localStorage.removeItem(k); } catch (_) {}
+    location.reload();
+  });
   $("export").addEventListener("click", (e) => {
     e.currentTarget.href = $("hide-absent").checked
       ? "/api/export.csv?scope=attended"

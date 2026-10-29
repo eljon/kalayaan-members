@@ -97,6 +97,10 @@ async function open(o) {
     viewport: o.viewport || { width: 1500, height: 1000 },
     deviceScaleFactor: o.scale || 1,
     acceptDownloads: true,
+    // The offline worker (public/sw.js) answers requests from a copy, which
+    // would hide stubbed responses and stale-data bugs from every other
+    // suite. Off unless a suite is about offline use.
+    serviceWorkers: o.serviceWorkers || "block",
   });
   await ctx.addCookies([{ name: "access_token", value: token(), url: BASE }]);
   const page = await ctx.newPage();

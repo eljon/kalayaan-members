@@ -14,7 +14,7 @@ const path = require("path");
 const { capture, SessionExpiredError, NoSessionError } = require("./lib/capture");
 const { toCSV } = require("./lib/parse");
 
-const OUT_DIR = path.join(__dirname, "output");
+const { OUTPUT_DIR: OUT_DIR } = require("./lib/paths");
 
 (async () => {
   fs.mkdirSync(OUT_DIR, { recursive: true });

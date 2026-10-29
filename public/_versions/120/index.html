@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="app-version" content="120">
+<title>Kalayaan Stewardship</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%232F5D50'/%3E%3Cg%20fill='%23E4E2D9'%3E%3Cellipse%20cx='12.5'%20cy='15.2'%20rx='7.6'%20ry='6'/%3E%3Ccircle%20cx='7'%20cy='12.2'%20r='3.9'/%3E%3Ccircle%20cx='12'%20cy='10.3'%20r='4.1'/%3E%3Ccircle%20cx='17'%20cy='11.6'%20r='3.8'/%3E%3Ccircle%20cx='6.8'%20cy='18'%20r='3.5'/%3E%3Ccircle%20cx='12'%20cy='20.2'%20r='3.6'/%3E%3Ccircle%20cx='17'%20cy='18.4'%20r='3.4'/%3E%3Crect%20x='9.2'%20y='20.2'%20width='2.4'%20height='5.2'%20rx='1.2'/%3E%3Crect%20x='12.4'%20y='20.4'%20width='2.4'%20height='5'%20rx='1.2'/%3E%3Crect%20x='16.6'%20y='20.4'%20width='2.4'%20height='5'%20rx='1.2'/%3E%3Crect%20x='19.6'%20y='20'%20width='2.4'%20height='5.4'%20rx='1.2'/%3E%3Cellipse%20cx='20.5'%20cy='16.6'%20rx='3'%20ry='4'/%3E%3Cellipse%20cx='23.5'%20cy='14.2'%20rx='3.3'%20ry='4.5'%20transform='rotate(34%2023.5%2014.2)'/%3E%3Cellipse%20cx='25.6'%20cy='17.5'%20rx='2.5'%20ry='2'%20transform='rotate(34%2025.6%2017.5)'/%3E%3Ccircle%20cx='25.1'%20cy='14.2'%20r='1'%20fill='%232F5D50'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2F5D50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stewardship">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-id">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" role="img" aria-label="Kalayaan Stewardship">
+        <rect class="logo-badge" width="32" height="32" rx="7"/>
+        <g class="logo-sheep">
+          <!-- fleece -->
+          <ellipse cx="12.5" cy="15.2" rx="7.6" ry="6"/>
+          <circle cx="7" cy="12.2" r="3.9"/>
+          <circle cx="12" cy="10.3" r="4.1"/>
+          <circle cx="17" cy="11.6" r="3.8"/>
+          <circle cx="6.8" cy="18" r="3.5"/>
+          <circle cx="12" cy="20.2" r="3.6"/>
+          <circle cx="17" cy="18.4" r="3.4"/>
+          <!-- legs, back pair then front -->
+          <rect x="9.2" y="20.2" width="2.4" height="5.2" rx="1.2"/>
+          <rect x="12.4" y="20.4" width="2.4" height="5" rx="1.2"/>
+          <rect x="16.6" y="20.4" width="2.4" height="5" rx="1.2"/>
+          <rect x="19.6" y="20" width="2.4" height="5.4" rx="1.2"/>
+          <!-- chest, then head tilted down into the muzzle -->
+          <ellipse cx="20.5" cy="16.6" rx="3" ry="4"/>
+          <ellipse cx="23.5" cy="14.2" rx="3.3" ry="4.5" transform="rotate(34 23.5 14.2)"/>
+          <ellipse cx="25.6" cy="17.5" rx="2.5" ry="2" transform="rotate(34 25.6 17.5)"/>
+          <circle cx="25.1" cy="14.2" r="1" class="logo-eye"/>
+        </g>
+      </svg>
+      <h1 class="wordmark" id="app-title">Kalayaan Stewardship</h1>
+    </div>
+  </div>
+  <div class="masthead-actions">
+    <span class="stamp" id="version"></span>
+    <span class="stamp" id="stamp"></span>
+    <div class="settings-wrap">
+      <button class="icon-btn" id="settings-btn" type="button" title="Settings" aria-label="Settings" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="settings-panel" id="settings-panel" role="dialog" aria-label="Settings" hidden>
+        <div class="set-row">
+          <span class="set-label">Appearance</span>
+          <div class="seg" id="theme-seg">
+            <button type="button" class="seg-btn" data-theme="light">Light</button>
+            <button type="button" class="seg-btn" data-theme="dark">Dark</button>
+          </div>
+        </div>
+        <div class="set-row set-col">
+          <label class="set-label" for="font-select">Font</label>
+          <select id="font-select"></select>
+        </div>
+        <div class="set-row set-col">
+          <span class="set-label">Excluded Sundays</span>
+          <p class="set-hint">Sundays with no class — a conference, a cancellation. Nobody can
+             attend one and nobody is absent from one, so they leave every count and the graph.</p>
+          <div class="set-weeks" id="set-weeks"></div>
+        </div>
+        <p class="set-hint set-who" id="set-who" hidden></p>
+        <div class="set-row set-col">
+          <button type="button" class="btn btn-quiet" id="clear-device-btn">Remove saved data from this device</button>
+          <p class="set-hint">This app keeps a copy of the roll on this device so it opens offline. Use this on a shared or borrowed device, or one you're giving away.</p>
+        </div>
+        <div class="set-row set-col set-signout" id="set-signout-row">
+          <button type="button" class="btn-signout" id="signout-btn">Sign out &amp; pull fresh</button>
+          <p class="set-hint">Forgets your LCR sign-in and clears cached reports, then pulls everything again from scratch. Use this if data won't load.</p>
+        </div>
+      </div>
+    </div>
+    <button id="refresh" class="btn">Refresh from LCR</button>
+  </div>
+</header>
+
+<p class="offline-bar" id="offline-bar" hidden></p>
+
+<nav class="tabs" id="tabs" hidden>
+  <button class="tab is-active" data-tab="attendance">Attendance</button>
+  <button class="tab" data-tab="returned" hidden>Returned Missionaries</button>
+  <button class="tab" data-tab="members">Members</button>
+  <button class="tab" data-tab="custom">Custom Reports</button>
+  <button class="tab" data-tab="actions">Action Lists</button>
+  <button class="tab" data-tab="focus">Focus<span class="tab-badge" id="focus-tab-badge" hidden>0</span></button>
+  <button class="tab" data-tab="quarterly">Quarterly Indicators</button>
+</nav>
+
+<div class="print-head" aria-hidden="true">
+  <div class="print-title" id="print-title"></div>
+  <div class="print-desc" id="print-desc" hidden></div>
+  <div class="print-meta"><b class="print-ward">Kalayaan Ward Stewardship</b> &middot; <span id="print-report"></span></div>
+  <div class="print-params" id="print-params"></div>
+</div>
+
+<main id="main" hidden>
+
+  <section id="view-attendance" class="view">
+
+    <p class="notice" id="notice" hidden></p>
+
+    <section class="graph" id="graph" aria-label="Attendance over time"></section>
+
+    <section class="range-bar" id="range-bar" hidden>
+      <div class="field">
+        <label for="rng-start">Report weeks</label>
+        <div class="range-pair">
+          <select id="rng-start"></select>
+          <span class="range-sep">to</span>
+          <select id="rng-end"></select>
+        </div>
+      </div>
+      <label class="g-toggle range-cmp-toggle"><input type="checkbox" id="cmp-on"> Compare to another range</label>
+      <div class="field cmp-field" id="cmp-fields" hidden>
+        <label for="cmp-start">Comparison weeks</label>
+        <div class="range-pair">
+          <select id="cmp-start"></select>
+          <span class="range-sep">to</span>
+          <select id="cmp-end"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="field field-search">
+        <label for="q">Find a name</label>
+        <input id="q" type="search" placeholder="Start typing" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="org">Organization</label>
+        <select id="org"><option value="">All organizations</option></select>
+      </div>
+      <div class="field">
+        <label for="sort">Order</label>
+        <select id="sort">
+          <option value="gaps">Fewest weeks attended</option>
+          <option value="most">Most weeks attended</option>
+          <option value="name">Name, A to Z</option>
+        </select>
+      </div>
+      <div class="field field-toggle">
+        <label for="hide-absent">Roll</label>
+        <div class="toggle">
+          <input type="checkbox" id="hide-absent">
+          <label for="hide-absent" class="toggle-label">Hide those with no attendance</label>
+        </div>
+      </div>
+      <a class="btn btn-quiet" id="export" href="/api/export.csv">Download CSV</a>
+      <button class="btn btn-quiet" id="att-pdf" type="button">PDF</button>
+      <button class="btn btn-quiet" id="att-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)">Sheet</button>
+    </section>
+
+    <section class="statbar" id="att-stats"></section>
+
+    <h2 class="roll-title" id="roll-title"></h2>
+    <p class="rowcount" id="att-count"></p>
+
+    <section class="roll" id="att-roll" aria-label="Member attendance">
+      <div class="roll-head" id="roll-head"></div>
+      <div class="roll-body" id="roll-body"></div>
+      <p class="roll-empty" id="roll-empty" hidden>No one matches that filter.</p>
+    </section>
+
+    <footer class="colophon">
+      <p><span class="key"><i class="cell on"></i> attended</span>
+         <span class="key"><i class="cell"></i> absent</span>
+         <span class="key"><i class="cell gone"></i> absent every week</span></p>
+      <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+    </footer>
+
+  </section>
+
+  <section id="view-returned" class="view" hidden>
+
+    <p class="notice" id="rm-notice" hidden></p>
+
+    <section class="controls">
+      <div class="field field-search">
+        <label for="rq">Find a name</label>
+        <input id="rq" type="search" placeholder="Start typing" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="rm-status">Temple recommend</label>
+        <select id="rm-status"><option value="">Any status</option></select>
+      </div>
+      <div class="field">
+        <label for="rm-lang">Mission language</label>
+        <select id="rm-lang"><option value="">Any language</option></select>
+      </div>
+      <a class="btn btn-quiet" id="rm-export" href="/api/returned.csv">Download CSV</a>
+      <button class="btn btn-quiet" id="rm-pdf" type="button">PDF</button>
+      <button class="btn btn-quiet" id="rm-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)">Sheet</button>
+    </section>
+
+    <section class="statbar" id="rm-stats"></section>
+
+    <section class="rm" aria-label="Returned missionaries">
+      <table class="rm-table" id="rm-table"></table>
+      <p class="roll-empty" id="rm-empty" hidden>No one matches that filter.</p>
+    </section>
+
+    <footer class="colophon">
+      <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+    </footer>
+
+  </section>
+
+  <section id="view-members" class="view" hidden>
+
+    <p class="notice" id="mem-notice" hidden></p>
+
+    <section class="controls">
+      <div class="field field-search">
+        <label for="mq">Find a name</label>
+        <input id="mq" type="search" placeholder="Start typing" autocomplete="off">
+      </div>
+      <a class="btn btn-quiet" id="mem-export" href="/api/members.csv">Download CSV</a>
+      <button class="btn btn-quiet" id="mem-pdf" type="button">PDF</button>
+      <button class="btn btn-quiet" id="mem-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)">Sheet</button>
+    </section>
+
+    <section class="statbar" id="mem-stats"></section>
+    <p class="recon" id="mem-recon" hidden></p>
+
+    <section class="rm" aria-label="All members">
+      <table class="rm-table mem-table" id="mem-table"></table>
+      <p class="roll-empty" id="mem-empty" hidden>No one matches that filter.</p>
+    </section>
+
+    <footer class="colophon">
+      <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+    </footer>
+
+  </section>
+
+  <section id="view-custom" class="view" hidden>
+
+    <div class="cr-layout">
+
+      <aside class="cr-sidebar">
+        <div class="cr-sidebar-head">
+          <h3>Reports</h3>
+          <button class="icon-btn" id="cr-new" type="button" title="New report" aria-label="New report">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul class="cr-list" id="cr-list"></ul>
+      </aside>
+
+      <div class="cr-main">
+
+        <p class="notice" id="cr-notice" hidden></p>
+
+        <section class="cr-builder">
+          <div class="cr-titlebar">
+            <input id="cr-name" class="cr-name" type="text" placeholder="Untitled report" autocomplete="off">
+            <button class="icon-btn" id="cr-edit" type="button" title="Edit" aria-label="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="icon-btn" id="cr-duplicate" type="button" title="Duplicate" aria-label="Duplicate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <a class="icon-btn" id="cr-export" href="#" title="Download CSV" aria-label="Download CSV">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+            </a>
+            <button class="icon-btn" id="cr-pdf" type="button" title="Print / PDF" aria-label="Print / PDF">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
+            </button>
+            <button class="icon-btn" id="cr-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)" aria-label="Download spreadsheet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+            </button>
+            <button class="icon-btn" id="cr-summary-btn" type="button" title="Hide summary" aria-label="Hide summary" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <input id="cr-desc" class="cr-desc is-empty" type="text"
+                 autocomplete="off" title="Add a description"
+                 aria-label="Report description">
+          <p class="cr-summary" id="cr-summary"></p>
+
+          <div class="cr-edit-panel" id="cr-edit-panel" hidden>
+            <div class="cr-toolbar">
+              <div class="field">
+                <label for="cr-match">Combine groups with</label>
+                <select id="cr-match">
+                  <option value="all">AND — all groups</option>
+                  <option value="any">OR — any group</option>
+                </select>
+              </div>
+              <button class="btn btn-quiet" id="cr-add-filter" type="button">Add group</button>
+              <button class="btn btn-quiet" id="cr-columns-btn" type="button">Choose columns</button>
+            </div>
+            <div class="cr-filters" id="cr-filters"></div>
+            <div class="cr-columns" id="cr-columns" hidden></div>
+          </div>
+        </section>
+
+        <section class="controls cr-controls">
+          <div class="field field-search">
+            <label for="cq">Find a name</label>
+            <input id="cq" type="search" placeholder="Start typing" autocomplete="off">
+          </div>
+        </section>
+
+        <section class="range-bar" id="cr-range-bar" hidden>
+          <div class="field">
+            <label for="cr-rng-start">Attendance weeks</label>
+            <div class="range-pair">
+              <select id="cr-rng-start"></select>
+              <span class="range-sep">to</span>
+              <select id="cr-rng-end"></select>
+            </div>
+          </div>
+          <label class="g-toggle range-cmp-toggle"><input type="checkbox" id="cr-cmp-on"> Compare to another range</label>
+          <div class="field cmp-field" id="cr-cmp-fields" hidden>
+            <label for="cr-cmp-start">Comparison weeks</label>
+            <div class="range-pair">
+              <select id="cr-cmp-start"></select>
+              <span class="range-sep">to</span>
+              <select id="cr-cmp-end"></select>
+            </div>
+          </div>
+        </section>
+
+        <div class="cr-top">
+          <section class="statbar" id="cr-stats"></section>
+          <section class="cr-graph" id="cr-graph" aria-label="Attendance over time for this report"></section>
+        </div>
+
+        <section class="rm" aria-label="Custom report">
+          <table class="rm-table mem-table" id="cr-table"></table>
+          <p class="roll-empty" id="cr-empty" hidden>No members match these filters.</p>
+        </section>
+
+        <footer class="colophon">
+          <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+        </footer>
+
+      </div>
+    </div>
+
+  </section>
+
+  <section id="view-actions" class="view" hidden>
+
+    <div class="cr-layout">
+
+      <aside class="cr-sidebar">
+        <div class="cr-sidebar-head">
+          <h3>Action Lists</h3>
+          <button class="icon-btn" id="al-new" type="button" title="New list" aria-label="New list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul class="cr-list al-list" id="al-list"></ul>
+      </aside>
+
+      <div class="cr-main">
+
+        <p class="notice" id="al-notice" hidden></p>
+
+        <div class="al-none" id="al-none" hidden>
+          <h3>No action lists yet</h3>
+          <p>Build one out of the members report. Everybody who matches your
+             conditions lands on it, the count stays live as the data changes,
+             and you check people off as you get to them.</p>
+          <button class="btn" id="al-none-new" type="button">New list</button>
+        </div>
+
+        <section class="cr-builder">
+          <div class="cr-titlebar">
+            <input id="al-name" class="cr-name" type="text" placeholder="Untitled list" autocomplete="off">
+            <button class="icon-btn" id="al-edit" type="button" title="Edit" aria-label="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="icon-btn" id="al-duplicate" type="button" title="Duplicate" aria-label="Duplicate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <a class="icon-btn" id="al-export" href="#" title="Download CSV" aria-label="Download CSV">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+            </a>
+            <button class="icon-btn" id="al-pdf" type="button" title="Print / PDF" aria-label="Print / PDF">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
+            </button>
+            <button class="icon-btn" id="al-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)" aria-label="Download spreadsheet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+            </button>
+            <button class="icon-btn" id="al-summary-btn" type="button" title="Hide summary" aria-label="Hide summary" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <input id="al-desc" class="cr-desc is-empty" type="text"
+                 autocomplete="off" title="Add a description"
+                 aria-label="Action list description">
+          <p class="cr-summary" id="al-summary"></p>
+
+          <div class="cr-edit-panel" id="al-edit-panel" hidden>
+            <div class="cr-toolbar">
+              <div class="field">
+                <label for="al-match">Combine groups with</label>
+                <select id="al-match">
+                  <option value="all">AND — all groups</option>
+                  <option value="any">OR — any group</option>
+                </select>
+              </div>
+              <button class="btn btn-quiet" id="al-add-filter" type="button">Add group</button>
+            </div>
+            <div class="cr-filters" id="al-filters"></div>
+          </div>
+        </section>
+
+        <section class="controls cr-controls">
+          <div class="field field-search">
+            <label for="alq">Find a name</label>
+            <input id="alq" type="search" placeholder="Start typing" autocomplete="off">
+          </div>
+          <button class="btn btn-quiet" id="al-columns-btn" type="button">Choose columns</button>
+          <label class="g-toggle al-showdone-toggle"><input type="checkbox" id="al-showdone"> Show hidden</label>
+        </section>
+
+        <div class="cr-columns" id="al-columns" hidden></div>
+
+        <div class="al-bulk" id="al-bulk" hidden>
+          <span class="al-bulk-count" id="al-bulk-count"></span>
+          <button class="btn btn-quiet" id="al-bulk-focus" type="button">Add to Focus</button>
+          <button class="btn btn-quiet" id="al-bulk-unfocus" type="button" hidden>Remove from Focus</button>
+          <button class="btn btn-quiet" id="al-bulk-hide" type="button">Hide</button>
+          <button class="btn btn-quiet" id="al-bulk-unhide" type="button" hidden>Unhide</button>
+          <button class="cr-linkbtn" id="al-bulk-clear" type="button">Clear selection</button>
+        </div>
+
+        <p class="rowcount" id="al-count"></p>
+
+        <section class="rm" aria-label="Action list">
+          <table class="rm-table mem-table" id="al-table"></table>
+          <p class="roll-empty" id="al-empty" hidden>All clear — nothing left on this list. 🎉</p>
+        </section>
+
+        <footer class="colophon">
+          <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+        </footer>
+
+      </div>
+    </div>
+
+  </section>
+
+
+  <section id="view-quarterly" class="view" hidden>
+
+    <p class="notice" id="qi-notice" hidden></p>
+
+    <section class="controls">
+      <div class="field">
+        <label for="qi-quarter">Quarter</label>
+        <select id="qi-quarter"></select>
+      </div>
+      <button class="btn btn-quiet" id="qi-pdf" type="button">PDF</button>
+      <button class="btn btn-quiet" id="qi-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)">Sheet</button>
+    </section>
+
+    <p class="qi-legend" id="qi-legend"></p>
+
+    <section class="rm" aria-label="Quarterly indicators">
+      <table class="rm-table mem-table qi-table" id="qi-table"></table>
+    </section>
+
+  </section>
+
+</main>
+
+<div class="print-foot" aria-hidden="true">
+  Confidential membership records — for authorized ward use only. Do not copy, share, or distribute.
+</div>
+
+<div class="curtain" id="curtain">
+  <div class="curtain-inner">
+    <h2 id="curtain-title">Opening the roll</h2>
+    <p id="curtain-body">Reading the last saved pull.</p>
+    <button id="curtain-action" class="btn" hidden></button>
+  </div>
+</div>
+
+<div class="modal" id="profile-modal" hidden>
+  <div class="modal-backdrop" id="profile-backdrop"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-name">
+    <button class="modal-close" id="profile-close" aria-label="Close">&times;</button>
+    <h2 id="profile-name">Member</h2>
+    <div class="modal-body" id="profile-body"></div>
+  </div>
+</div>
+
+<section id="view-focus" class="view" hidden>
+
+  <p class="notice" id="focus-notice" hidden></p>
+
+  <section class="cr-builder">
+    <div class="cr-titlebar">
+      <h2 class="focus-title">Focus</h2>
+      <a class="icon-btn" id="focus-export" href="#" title="Download CSV" aria-label="Download CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+      </a>
+      <button class="icon-btn" id="focus-pdf" type="button" title="Print / PDF" aria-label="Print / PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
+      </button>
+      <button class="icon-btn" id="focus-sheet" type="button" title="Download a styled spreadsheet (opens in Google Sheets or Excel)" aria-label="Download spreadsheet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+      </button>
+    </div>
+    <p class="cr-summary" id="focus-summary"></p>
+  </section>
+
+  <section class="controls cr-controls">
+    <div class="field field-search">
+      <label for="focusq">Find a name</label>
+      <input id="focusq" type="search" placeholder="Start typing" autocomplete="off">
+    </div>
+    <button class="btn btn-quiet" id="focus-columns-btn" type="button">Choose columns</button>
+  </section>
+
+  <div class="cr-columns" id="focus-columns" hidden></div>
+
+  <p class="rowcount" id="focus-count"></p>
+
+  <section class="rm" aria-label="Focus">
+    <table class="rm-table mem-table" id="focus-table"></table>
+    <div class="al-none" id="focus-none" hidden>
+      <h3>Nobody in Focus yet</h3>
+      <p>Tick somebody on an action list and choose <b>Add to Focus</b>. They
+         land here with a note of the list they came from, and turn green once
+         that list no longer matches them.</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <p class="note">Confidential membership records. Keep this window on your own machine.</p>
+  </footer>
+
+</section>
+
+<div class="modal" id="lcr-modal" hidden>
+  <div class="modal-backdrop"></div>
+  <div class="modal-card lcr-card" role="dialog" aria-modal="true" aria-labelledby="lcr-title">
+    <button class="modal-close" id="lcr-close" aria-label="Cancel sign-in">&times;</button>
+    <h2 id="lcr-title">Sign in to LCR</h2>
+    <p class="lcr-meta" id="lcr-meta">Opening LCR's sign-in page…</p>
+    <div class="lcr-screen" id="lcr-screen" tabindex="0" aria-label="LCR sign-in page. Tap a field, then type below.">
+      <img id="lcr-frame" alt="">
+    </div>
+    <form class="lcr-type" id="lcr-type" autocomplete="off">
+      <input id="lcr-text" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Tap a field above, then type here" aria-label="Text to type into the sign-in page">
+      <button class="btn" type="submit">Send</button>
+    </form>
+    <div class="lcr-keys">
+      <button class="btn btn-quiet" type="button" data-key="Enter">Enter</button>
+      <button class="btn btn-quiet" type="button" data-key="Backspace">⌫ Delete</button>
+      <button class="btn btn-quiet" type="button" data-key="Tab">Next field</button>
+      <button class="btn btn-quiet" type="button" data-scroll="300">Scroll ↓</button>
+      <button class="btn btn-quiet" type="button" data-scroll="-300">Scroll ↑</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="att-modal" hidden>
+  <div class="modal-backdrop" id="att-backdrop"></div>
+  <div class="modal-card modal-narrow" role="dialog" aria-modal="true" aria-labelledby="att-modal-name">
+    <button class="modal-close" id="att-modal-close" aria-label="Close">&times;</button>
+    <h2 id="att-modal-name">Member</h2>
+    <p class="att-modal-meta" id="att-modal-meta"></p>
+    <div class="modal-body" id="att-modal-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="qi-modal" hidden>
+  <div class="modal-backdrop" id="qi-backdrop"></div>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="qi-modal-title">
+    <button class="modal-close" id="qi-modal-close" aria-label="Close">&times;</button>
+    <h2 id="qi-modal-title">Indicator</h2>
+    <p class="qi-modal-meta" id="qi-modal-meta"></p>
+    <div class="modal-body" id="qi-modal-body"></div>
+    <div class="qi-modal-foot">
+      <button class="btn btn-quiet" id="qi-modal-csv" type="button">Download CSV</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

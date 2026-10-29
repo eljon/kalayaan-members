@@ -63,6 +63,13 @@ his computer; Access asks for an approved email; the server verifies
 Access's signed token. LCR sign-in stays on the host machine — remote users
 are told to ask the owner. Setup: `REMOTE.md`.
 
+**Then (Oct 2026): fully cloud.** The owner didn't want any computer of his
+involved. Fly.io (Docker, a volume for state, ~US$6/mo), Cloudflare Access
+unchanged in front. LCR sign-in moved into the app (`lib/login-relay.js`)
+because a server has no screen. Each device keeps an offline copy
+(`public/sw.js`). Unknown until tried: whether LCR/Okta accepts a sign-in
+from a data-centre IP — `CLOUD.md` step 7 has the copy-the-session fallback.
+
 ## How the data is obtained
 
 **Full method, reasoning, and the console snippets: `DISCOVERY.md`.**

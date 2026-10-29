@@ -101,9 +101,40 @@ function sign(claims, { key = privateKey, kid = "k1", alg = "RS256" } = {}) {
     ok((await get("/api/login", leader, "POST")).status === 403, "a remote leader cannot start an LCR sign-in");
     ok((await get("/api/logout", leader, "POST")).status === 403, "a remote leader cannot sign the app out");
     const ow = JSON.parse((await get("/api/whoami", owner)).body || "{}");
-    ok(ow.owner === true && ow.canSignIn === false, "a remote owner may sign out, but still cannot sign in from afar");
+    ok(ow.owner === true && ow.signIn === "relay",
+      `a remote owner signs in to LCR inside the app, not in a window on the host (${ow.signIn})`);
   } finally {
     srv.kill();
+  }
+
+  // ---- the cloud: the email login is the only way in -------------------------
+  const cport = port + 1;
+  const csrv = spawn(process.execPath, [path.join(__dirname, "..", "server.js")], {
+    env: { ...process.env, ...env, PORT: String(cport), NO_OPEN: "1", HOST: "127.0.0.1", CLOUD: "1" },
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+  const cget = (p, headers = {}, method = "GET") => new Promise((res) => {
+    const req = http.request({ host: "127.0.0.1", port: cport, path: p, method, headers }, (r) => {
+      let b = ""; r.on("data", (c) => (b += c)); r.on("end", () => res({ status: r.statusCode, body: b }));
+    });
+    req.on("error", () => res({ status: 0, body: "" }));
+    req.end();
+  });
+  for (let i = 0; i < 40; i++) { if ((await cget("/healthz")).status) break; await new Promise((r) => setTimeout(r, 250)); }
+  try {
+    const fs = require("fs");
+    const { OUTPUT_DIR } = require("../lib/paths");
+    const code = fs.readFileSync(path.join(OUTPUT_DIR, ".access-token"), "utf8").trim();
+    ok((await cget("/healthz")).status === 200, "cloud: the health check answers without a login");
+    ok((await cget("/api/whoami", { cookie: "access_token=" + code })).status === 401,
+      "cloud: the access code from the server log does not open the app");
+    ok((await cget("/api/auth", {}, "POST")).status === 403, "cloud: the access-code form is switched off");
+    const lw = JSON.parse((await cget("/api/whoami", { "cf-access-jwt-assertion": sign(good) })).body || "{}");
+    ok(lw.email === "leader@example.com" && lw.signIn === "none", "cloud: an approved leader gets in, without LCR sign-in");
+    const ow2 = JSON.parse((await cget("/api/whoami", { "cf-access-jwt-assertion": sign({ ...good, email: "owner@example.com" }) })).body || "{}");
+    ok(ow2.owner === true && ow2.signIn === "relay", "cloud: the owner signs in to LCR inside the app");
+  } finally {
+    csrv.kill();
     certs.close();
   }
 

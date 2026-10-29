@@ -1972,3 +1972,43 @@ tr:hover .al-act-focus.is-on { border-color: var(--spruce); }
 /* .set-row sets display, which would otherwise beat the hidden attribute. */
 .set-row[hidden], .set-who[hidden] { display: none; }
 .set-who { margin: .2rem 0 .4rem; }
+
+/* ---------------------------------------------- LCR sign-in, inside the app */
+.lcr-card { width: min(470px, 100%); }
+.lcr-meta { margin: -.7rem 0 .8rem; font-family: var(--data); font-size: 12px; color: var(--ink-soft); }
+.lcr-screen {
+  border: 1px solid var(--rule);
+  background: #fff;
+  border-radius: 3px;
+  overflow: hidden;
+  aspect-ratio: 420 / 760;
+  max-height: 62vh;
+  margin: 0 auto;
+}
+.lcr-screen img { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+.lcr-type { display: flex; gap: .5rem; margin-top: .8rem; }
+.lcr-type input {
+  flex: 1 1 auto; min-width: 0;
+  font: inherit; font-size: 16px;   /* 16px stops phones zooming in on focus */
+  padding: .5rem .6rem; border: 1px solid var(--rule); border-radius: 2px;
+  background: var(--ledger); color: var(--ink);
+}
+.lcr-keys { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+.lcr-keys .btn { padding: .3rem .6rem; font-size: 13px; }
+
+/* Offline: the page is showing the copy saved on this device. */
+.offline-bar {
+  margin: 0;
+  padding: .55rem var(--gut);
+  background: #F3E7C9;
+  border-bottom: 1px solid #D9C48F;
+  color: #5C4A12;
+  font-family: var(--ui);
+  font-size: 13px;
+}
+.offline-bar[hidden] { display: none; }
+:root[data-theme="dark"] .offline-bar { background: #3A3220; border-color: #5C4A12; color: #EAD9A6; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .offline-bar { background: #3A3220; border-color: #5C4A12; color: #EAD9A6; }
+}
+@media print { .offline-bar { display: none !important; } }

@@ -1,0 +1,10 @@
+# Never ship member records, sessions or local settings into the image.
+output/
+lcr-session.json
+lcr-action.json
+.env
+node_modules/
+.git/
+dev/
+*.log
+.DS_Store

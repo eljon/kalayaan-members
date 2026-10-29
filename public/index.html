@@ -3,13 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="119">
+<meta name="app-version" content="120">
 <title>Kalayaan Stewardship</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%232F5D50'/%3E%3Cg%20fill='%23E4E2D9'%3E%3Cellipse%20cx='12.5'%20cy='15.2'%20rx='7.6'%20ry='6'/%3E%3Ccircle%20cx='7'%20cy='12.2'%20r='3.9'/%3E%3Ccircle%20cx='12'%20cy='10.3'%20r='4.1'/%3E%3Ccircle%20cx='17'%20cy='11.6'%20r='3.8'/%3E%3Ccircle%20cx='6.8'%20cy='18'%20r='3.5'/%3E%3Ccircle%20cx='12'%20cy='20.2'%20r='3.6'/%3E%3Ccircle%20cx='17'%20cy='18.4'%20r='3.4'/%3E%3Crect%20x='9.2'%20y='20.2'%20width='2.4'%20height='5.2'%20rx='1.2'/%3E%3Crect%20x='12.4'%20y='20.4'%20width='2.4'%20height='5'%20rx='1.2'/%3E%3Crect%20x='16.6'%20y='20.4'%20width='2.4'%20height='5'%20rx='1.2'/%3E%3Crect%20x='19.6'%20y='20'%20width='2.4'%20height='5.4'%20rx='1.2'/%3E%3Cellipse%20cx='20.5'%20cy='16.6'%20rx='3'%20ry='4'/%3E%3Cellipse%20cx='23.5'%20cy='14.2'%20rx='3.3'%20ry='4.5'%20transform='rotate(34%2023.5%2014.2)'/%3E%3Cellipse%20cx='25.6'%20cy='17.5'%20rx='2.5'%20ry='2'%20transform='rotate(34%2025.6%2017.5)'/%3E%3Ccircle%20cx='25.1'%20cy='14.2'%20r='1'%20fill='%232F5D50'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2F5D50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stewardship">
 </head>
 <body>
 
@@ -68,6 +73,10 @@
           <div class="set-weeks" id="set-weeks"></div>
         </div>
         <p class="set-hint set-who" id="set-who" hidden></p>
+        <div class="set-row set-col">
+          <button type="button" class="btn btn-quiet" id="clear-device-btn">Remove saved data from this device</button>
+          <p class="set-hint">This app keeps a copy of the roll on this device so it opens offline. Use this on a shared or borrowed device, or one you're giving away.</p>
+        </div>
         <div class="set-row set-col set-signout" id="set-signout-row">
           <button type="button" class="btn-signout" id="signout-btn">Sign out &amp; pull fresh</button>
           <p class="set-hint">Forgets your LCR sign-in and clears cached reports, then pulls everything again from scratch. Use this if data won't load.</p>
@@ -77,6 +86,8 @@
     <button id="refresh" class="btn">Refresh from LCR</button>
   </div>
 </header>
+
+<p class="offline-bar" id="offline-bar" hidden></p>
 
 <nav class="tabs" id="tabs" hidden>
   <button class="tab is-active" data-tab="attendance">Attendance</button>
@@ -541,6 +552,30 @@
   </footer>
 
 </section>
+
+<div class="modal" id="lcr-modal" hidden>
+  <div class="modal-backdrop"></div>
+  <div class="modal-card lcr-card" role="dialog" aria-modal="true" aria-labelledby="lcr-title">
+    <button class="modal-close" id="lcr-close" aria-label="Cancel sign-in">&times;</button>
+    <h2 id="lcr-title">Sign in to LCR</h2>
+    <p class="lcr-meta" id="lcr-meta">Opening LCR's sign-in page…</p>
+    <div class="lcr-screen" id="lcr-screen" tabindex="0" aria-label="LCR sign-in page. Tap a field, then type below.">
+      <img id="lcr-frame" alt="">
+    </div>
+    <form class="lcr-type" id="lcr-type" autocomplete="off">
+      <input id="lcr-text" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Tap a field above, then type here" aria-label="Text to type into the sign-in page">
+      <button class="btn" type="submit">Send</button>
+    </form>
+    <div class="lcr-keys">
+      <button class="btn btn-quiet" type="button" data-key="Enter">Enter</button>
+      <button class="btn btn-quiet" type="button" data-key="Backspace">⌫ Delete</button>
+      <button class="btn btn-quiet" type="button" data-key="Tab">Next field</button>
+      <button class="btn btn-quiet" type="button" data-scroll="300">Scroll ↓</button>
+      <button class="btn btn-quiet" type="button" data-scroll="-300">Scroll ↑</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="att-modal" hidden>
   <div class="modal-backdrop" id="att-backdrop"></div>

@@ -77,13 +77,21 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
   place that filter lives — read roll rows from it, not from `data.rows`.
 - Never commit `lcr-session.json` (live auth cookies) or `output/` (member records).
 - Never put real member names in the repo. Use the fixture.
-- The server is never exposed directly. Remote use goes through a Cloudflare
-  Tunnel with Cloudflare Access in front (`REMOTE.md`); with that configured
-  the server binds 127.0.0.1 so the tunnel is the only way in, and every
-  tunnelled request must carry an Access token that `lib/access.js` verifies
-  (signature, issuer, AUD, expiry) — never trust the header or the email on
-  sight. `npm run check` forges tokens to prove it. Without it, the access
-  code gate applies.
+- **It runs in the cloud** (`CLOUD.md`): Fly.io, `Dockerfile`, state on the
+  volume via `DATA_DIR` (`lib/paths.js` — never write `output/` paths by
+  hand). Cloudflare Access is the only way in there: every request must carry
+  an Access token that `lib/access.js` verifies (signature, issuer, AUD,
+  expiry) — never trust the header or the email on sight; the access code is
+  off in `CLOUD=1`. `npm run check` forges tokens to prove it. Locally the
+  access-code gate still applies, and `REMOTE.md` (tunnel) still works.
+- LCR sign-in in the cloud is `lib/login-relay.js`: a headless browser shown
+  to the owner as pictures, taps and keys sent back. It must stay ignorant of
+  what the page contains — that is what survives Okta changing. Never log or
+  store what is typed into it.
+- `public/sw.js` keeps an offline copy on each device: network first, the
+  copy only when the server can't be reached, and always marked as the copy.
+  Never answer a Refresh (`?force=1`), a write, a download or sign-in from it.
+  Browser suites block it (`harness.js`) except `dev/ui/offline.js`.
 - No build step, no framework, no bundler. Vanilla JS in `public/`.
 - In `weeks[]`, absence is omission. There is no `didAttend: false`.
 - Walk `childOrgs` when resolving `orgIds`, or class names leak as uuids.

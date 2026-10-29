@@ -28,6 +28,8 @@ const SUITES = [
   "grid-reader",     // the LCR report reader reads every row, however the grid draws
   "month-switch",    // earlier months still load when LCR answers 409
   "remote",          // a leader arriving through the shareable link
+  "lcr-signin",      // signing in to LCR inside the app (the cloud has no screen)
+  "offline",         // the app opens with no connection, from the copy on the device
   "smoke",           // every tab renders; the invariants that have broken before
   "roster",          // people who left the ward appear nowhere
   "refresh",         // one refresh repaints every tab

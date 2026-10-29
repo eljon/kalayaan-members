@@ -22,18 +22,26 @@ const {
   SessionExpiredError,
   NoSessionError,
   LoginTimeoutError,
+  onReport,
+  REPORT_URL,
+  SESSION_PATH,
 } = require("./lib/capture");
+const { LoginRelay } = require("./lib/login-relay");
 const { toCSV } = require("./lib/parse");
 const { buildWorkbook } = require("./lib/xlsx");
 const { version: APP_VERSION } = require("./version");
 
 const crypto = require("crypto");
 const { loadDotEnv, accessConfig, keyStore, verifyAccessToken } = require("./lib/access");
+const { OUTPUT_DIR } = require("./lib/paths");
 
 loadDotEnv(__dirname);
 // Remote use (REMOTE.md): Cloudflare Tunnel in front, Cloudflare Access
 // asking for an approved email. Null when not set up.
 const REMOTE = accessConfig();
+// Running on a cloud server (the Dockerfile sets CLOUD=1): no screen, so LCR
+// sign-in happens inside the app, and nobody is "on this computer".
+const CLOUD = process.env.CLOUD === "1";
 const accessKeys = REMOTE ? keyStore(REMOTE) : null;
 
 const PORT = process.env.PORT || 4173;
@@ -42,10 +50,10 @@ const PORT = process.env.PORT || 4173;
 // skip the email check. Without it, keep the old behaviour (access code,
 // reachable on the local network).
 const HOST = process.env.HOST || (REMOTE ? "127.0.0.1" : "0.0.0.0");
-const CACHE_PATH = path.join(__dirname, "output", "latest.json");
+const CACHE_PATH = path.join(OUTPUT_DIR, "latest.json");
 const STALE_AFTER = 12 * 60 * 60 * 1000; // suggest a fresh pull after 12h
 const VERSIONS_DIR = path.join(__dirname, "public", "_versions");
-const TOKEN_PATH = path.join(__dirname, "output", ".access-token");
+const TOKEN_PATH = path.join(OUTPUT_DIR, ".access-token");
 
 function ensureAccessToken() {
   fs.mkdirSync(path.dirname(TOKEN_PATH), { recursive: true });
@@ -73,6 +81,8 @@ function parseCookies(header) {
 }
 
 app.post("/api/auth", express.urlencoded({ extended: false }), (req, res) => {
+  // In the cloud with the email login set up, there is no access code.
+  if (CLOUD && REMOTE) return res.status(403).send(gatePage(null, true));
   const code = (req.body && req.body.code || "").trim();
   if (code !== ACCESS_TOKEN) {
     return res.status(401).send(gatePage("Incorrect access code. Try again."));
@@ -81,7 +91,7 @@ app.post("/api/auth", express.urlencoded({ extended: false }), (req, res) => {
   res.redirect("/");
 });
 
-function gatePage(error) {
+function gatePage(error, linkOnly) {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kalayaan Stewardship — Access</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f4f0;color:#1a1a1a}
@@ -90,10 +100,12 @@ h1{font-size:1.25rem;margin-bottom:.75rem}p{font-size:.9rem;color:#555;margin-bo
 input{width:100%;padding:.6rem .75rem;font-size:1rem;border:1px solid #ccc;border-radius:6px;margin-bottom:1rem}
 button{width:100%;padding:.6rem;font-size:1rem;background:#2F5D50;color:#fff;border:none;border-radius:6px;cursor:pointer}
 button:hover{background:#264d42}.err{color:#8C2F26;font-size:.85rem;margin-bottom:.75rem}</style></head>
-<body><div class="gate"><h1>Kalayaan Stewardship</h1><p>Enter the access code shown in the terminal where the app is running.</p>
+<body><div class="gate"><h1>Kalayaan Stewardship</h1>${linkOnly
+  ? "<p>Open the app through its usual link, and sign in with your approved email.</p></div></body></html>"
+  : `<p>Enter the access code shown in the terminal where the app is running.</p>
 ${error ? '<p class="err">' + error + "</p>" : ""}
-<form method="POST" action="/api/auth"><input name="code" type="password" placeholder="Access code" autofocus autocomplete="off">
-<button type="submit">Continue</button></form></div></body></html>`;
+<form method="POST" action="/api/auth">`}${linkOnly ? "" : `<input name="code" type="password" placeholder="Access code" autofocus autocomplete="off">
+<button type="submit">Continue</button></form></div></body></html>`}`;
 }
 
 // Two ways in. Through the tunnel, Cloudflare Access has already asked for
@@ -102,8 +114,20 @@ ${error ? '<p class="err">' + error + "</p>" : ""}
 // tunnel), the access code printed in the terminal. A request through the
 // tunnel with no valid token falls back to the access code, so a tunnel
 // set up without Access is still locked.
+// The cloud host asks this to know the app is up. It says nothing else.
+app.get("/healthz", (req, res) => res.type("text").send("ok"));
+
+// In the cloud with the email login set up, that login is the only way in:
+// the access code — printed in the server's log — is switched off, so the
+// log is not a key to member records.
+const ACCESS_ONLY = CLOUD && !!REMOTE;
+if (CLOUD && !REMOTE) {
+  console.error("\n  WARNING: running in the cloud without the email login (ACCESS_TEAM_DOMAIN / ACCESS_AUD).");
+  console.error("  The access code is the only lock. Finish CLOUD.md step 4 before sharing the link.\n");
+}
+
 app.use(async (req, res, next) => {
-  if (req.path === "/api/auth") return next();
+  if (req.path === "/api/auth") return ACCESS_ONLY ? res.status(403).send(gatePage("Open the app through its link.")) : next();
   const jwt = req.headers["cf-access-jwt-assertion"];
   if (REMOTE && jwt) {
     try {
@@ -115,6 +139,10 @@ app.use(async (req, res, next) => {
       if (req.path.startsWith("/api/")) return res.status(401).json({ error: "UNAUTHORIZED" });
       return res.status(401).send(gatePage("Your sign-in could not be verified. Close this tab and open the link again."));
     }
+  }
+  if (ACCESS_ONLY) {
+    if (req.path.startsWith("/api/")) return res.status(401).json({ error: "UNAUTHORIZED" });
+    return res.status(401).send(gatePage(null, true));
   }
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies.access_token || (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
@@ -133,10 +161,78 @@ app.get("/api/whoami", (req, res) => {
     email: req.user.email,
     via: req.user.via,
     owner: req.user.owner,
-    // Signing in to LCR opens a browser window on the computer running the
-    // app. From anywhere else nobody could see it, let alone pass MFA in it.
-    canSignIn: req.user.via !== "access",
+    // How this person can sign the app in to LCR: a window on this computer
+    // (here, with a screen), the sign-in shown inside the app (the cloud, or
+    // an owner from afar), or not at all (a leader who is not an owner).
+    signIn: signInModeFor(req.user),
+    canSignIn: signInModeFor(req.user) !== "none",
   });
+});
+
+function signInModeFor(user) {
+  if (user.via === "code" && !CLOUD) return "window";
+  return user.owner ? "relay" : "none";
+}
+
+// ------------------------------------------------- LCR sign-in inside the app
+// See lib/login-relay.js. One at a time; owners only.
+let relay = null;
+function relayGuard(req, res) {
+  if (signInModeFor(req.user) !== "relay") { res.status(403).json({ error: "OWNER_ONLY" }); return false; }
+  return true;
+}
+app.post("/api/login-relay/start", async (req, res) => {
+  if (!relayGuard(req, res)) return;
+  if (busy) return res.status(409).json({ error: "BUSY", busy });
+  if (relay) await relay.close();
+  const { chromium } = require("playwright");
+  relay = new LoginRelay({
+    startUrl: REPORT_URL,
+    isDone: onReport,
+    // CHROMIUM_PATH: only for a machine whose browser build does not match
+    // the installed Playwright (the tests' container). The cloud image
+    // installs the matching one and leaves it unset.
+    launch: () => chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || undefined }),
+    save: async (ctx) => {
+      fs.mkdirSync(path.dirname(SESSION_PATH), { recursive: true });
+      await ctx.storageState({ path: SESSION_PATH });
+    },
+  });
+  await relay.start();
+  res.json(relay.status());
+});
+app.get("/api/login-relay/status", (req, res) => {
+  if (!relayGuard(req, res)) return;
+  res.json(relay ? relay.status() : { state: "none" });
+});
+app.get("/api/login-relay/frame", async (req, res) => {
+  if (!relayGuard(req, res)) return;
+  try {
+    const img = relay && (await relay.frame());
+    if (!img) return res.status(204).end();
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(img);
+  } catch (_) { res.status(204).end(); }
+});
+app.post("/api/login-relay/input", express.json({ limit: "4kb" }), async (req, res) => {
+  if (!relayGuard(req, res)) return;
+  if (!relay || relay.state !== "signing-in") return res.status(409).json({ error: "NOT_SIGNING_IN" });
+  const b = req.body || {};
+  try {
+    if (b.tap) await relay.tap(b.tap.x, b.tap.y);
+    else if (typeof b.type === "string") await relay.type(b.type);
+    else if (b.press) await relay.press(b.press);
+    else if (b.scroll) await relay.scroll(b.scroll);
+    res.json(relay.status());
+  } catch (err) {
+    res.status(400).json({ error: "BAD_INPUT", detail: err.message });
+  }
+});
+app.post("/api/login-relay/cancel", async (req, res) => {
+  if (!relayGuard(req, res)) return;
+  if (relay) { await relay.close(); relay = null; }
+  res.json({ state: "none" });
 });
 
 // Revert route: /v4 (and /v4/app.js, /v4/style.css) serve an archived
@@ -162,7 +258,10 @@ app.use(
   express.static(path.join(__dirname, "public"), {
     etag: true,
     maxAge: 0,
-    setHeaders: (res) => res.setHeader("Cache-Control", "no-cache, must-revalidate"),
+    setHeaders: (res, file) => {
+      res.setHeader("Cache-Control", "no-cache, must-revalidate");
+      if (file.endsWith(".webmanifest")) res.setHeader("Content-Type", "application/manifest+json");
+    },
   })
 );
 
@@ -205,7 +304,7 @@ app.get("/api/data", (req, res) => {
 
 /** Opens a real browser window for sign-in, then pulls straight away. */
 app.post("/api/login", async (req, res) => {
-  if (req.user.via === "access") return res.status(403).json({ error: "LOGIN_ON_HOST" });
+  if (signInModeFor(req.user) !== "window") return res.status(403).json({ error: "LOGIN_ON_HOST" });
   if (busy) return res.status(409).json({ error: "BUSY", busy });
   busy = "login";
   progress = "Opening the sign-in window";
@@ -272,7 +371,7 @@ app.get("/api/export.csv", (req, res) => {
 // wired yet (its payload shape must be observed first); this serves
 // whatever has been written to output/returned.json, or the offline
 // fixture the fixture generator writes there.
-const RETURNED_PATH = path.join(__dirname, "output", "returned.json");
+const RETURNED_PATH = path.join(OUTPUT_DIR, "returned.json");
 
 function readReturned() {
   try {
@@ -373,7 +472,7 @@ app.get("/api/returned.csv", (req, res) => {
 
 // All members — another LCR custom report, ~65 columns. Same generic pull;
 // auto-loads on first open like the returned report.
-const MEMBERS_PATH = path.join(__dirname, "output", "members.json");
+const MEMBERS_PATH = path.join(OUTPUT_DIR, "members.json");
 
 function readMembers() {
   try {
@@ -437,7 +536,7 @@ app.get("/api/members.csv", (req, res) => {
 
 // User preferences — server-side persistence so settings, custom reports,
 // action lists, and check-offs survive across machines and browser resets.
-const PREFS_PATH = path.join(__dirname, "output", "prefs.json");
+const PREFS_PATH = path.join(OUTPUT_DIR, "prefs.json");
 
 function readPrefs() {
   try {
