@@ -70,10 +70,18 @@ because a server has no screen. Each device keeps an offline copy
 (`public/sw.js`). Unknown until tried: whether LCR/Okta accepts a sign-in
 from a data-centre IP — `CLOUD.md` step 7 has the copy-the-session fallback.
 
-Cost: Fly sleeps when idle (`auto_stop_machines = "stop"`), roughly US$1/mo.
-For $0, `ORACLE.md`: the same Docker image on Oracle's Always Free Ampere VM,
-published on 127.0.0.1:4173 so the existing `kalayaan-roll` tunnel works
-unchanged. Cloudflare-only and Firestore were weighed and rejected: Browser
+**Then (Oct 2026): GitHub → free server.** The owner wanted the code to stay
+on GitHub, deployed from there, for free, with verified prices rather than
+estimates. `.github/workflows/deploy-server.yml` runs `npm run check` on every
+push, then ships `git archive HEAD` plus the settings (repository secrets)
+over SSH and runs `deploy/server.sh`, which installs Docker/cloudflared on
+first run, builds, swaps the container and rolls back if `/healthz` doesn't
+answer. Target: Oracle Always Free A1 (1 OCPU/6 GB — inside both the
+4/24 and the reportedly halved 2/12 allowance), published on 127.0.0.1:4173
+so the existing `kalayaan-roll` tunnel works unchanged. Any Ubuntu VPS works
+the same (`SERVER_USER`). `ORACLE.md` has the prices with sources. Fly
+(`CLOUD.md`) remains as a paid alternative: no free tier for new orgs.
+Cloudflare-only and Firestore were weighed and rejected: Browser
 Rendering's free tier is 10 min/day; Firestore can't run Chrome.
 
 ## How the data is obtained

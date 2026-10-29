@@ -1,0 +1,111 @@
+# Deploy to the server from GitHub, on every push. ORACLE.md.
+#
+# 1. Runs `npm run check` — a version that miscounts attendance never ships.
+# 2. Sends the code and the settings below to the server over SSH, and runs
+#    deploy/server.sh there, which installs what's missing, builds, and
+#    swaps the running app (putting the old one back if the new one fails).
+#
+# Settings are repository secrets (Settings → Secrets and variables →
+# Actions). Until SERVER_HOST is set, this only runs the checks.
+#
+#   SERVER_HOST         the server's public IP address
+#   SERVER_SSH_KEY      the private key Oracle gave you when creating it
+#   ACCESS_TEAM_DOMAIN  e.g. kalayaan.cloudflareaccess.com
+#   ACCESS_AUD          the Access application's AUD tag
+#   OWNER_EMAILS        who may sign the app in to LCR, comma-separated
+#   TUNNEL_TOKEN        the kalayaan-roll tunnel's token (starts eyJ)
+#   SERVER_USER         optional — default ubuntu (Oracle); root on Hetzner
+#   SERVER_KNOWN_HOSTS  optional — pins the server's identity; the deploy
+#                       log prints the line to paste
+name: Deploy to the server
+
+on:
+  push:
+    branches: [main, claude/file-study-handover-32tv0w]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      SERVER_KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+      ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+      ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+      OWNER_EMAILS: ${{ secrets.OWNER_EMAILS }}
+      TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+    steps:
+      - name: Is a server set up?
+        id: ready
+        run: |
+          if [ -z "$SERVER_HOST" ]; then
+            echo "::notice::No SERVER_HOST secret yet — checks passed, nothing deployed. ORACLE.md step 4."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          missing=""
+          for s in SERVER_SSH_KEY ACCESS_TEAM_DOMAIN ACCESS_AUD OWNER_EMAILS TUNNEL_TOKEN; do
+            [ -n "${!s}" ] || missing="$missing $s"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing (ORACLE.md step 4)"
+            exit 1
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.ready.outputs.go == 'true'
+
+      - name: Deploy
+        if: steps.ready.outputs.go == 'true'
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SERVER_SSH_KEY" | tr -d '\r' > ~/.ssh/server
+          if [ -n "$SERVER_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SERVER_KNOWN_HOSTS" > ~/.ssh/known_hosts
+            check=yes
+          else
+            check=accept-new
+          fi
+          ssh_() {
+            ssh -i ~/.ssh/server -o StrictHostKeyChecking=$check -o ServerAliveInterval=30 \
+              "${SERVER_USER:-ubuntu}@$SERVER_HOST" "$@"
+          }
+
+          stage="$(mktemp -d)"
+          git archive --format=tar.gz -o "$stage/app.tgz" HEAD
+          printf 'ACCESS_TEAM_DOMAIN=%s\nACCESS_AUD=%s\nOWNER_EMAILS=%s\n' \
+            "$ACCESS_TEAM_DOMAIN" "$ACCESS_AUD" "$OWNER_EMAILS" > "$stage/kalayaan.env"
+          printf '%s' "$TUNNEL_TOKEN" > "$stage/tunnel-token"
+
+          echo "Sending $(git rev-parse --short HEAD) to the server…"
+          tar -C "$stage" -czf - . | ssh_ 'rm -rf ~/kalayaan-deploy && mkdir -m 700 ~/kalayaan-deploy && tar -xzf - -C ~/kalayaan-deploy'
+          rm -rf "$stage"
+          ssh_ 'sudo bash -s -- "$HOME/kalayaan-deploy"' < deploy/server.sh
+
+          if [ -z "$SERVER_KNOWN_HOSTS" ]; then
+            echo "::notice::Optional: pin this server's identity — add a SERVER_KNOWN_HOSTS secret containing: $(ssh-keygen -F "$SERVER_HOST" -f ~/.ssh/known_hosts | grep -v '^#' | head -1)"
+          fi

@@ -13,11 +13,14 @@ Everything lives on a rented server — no computer of yours has to be on.
   it opens again with no connection, showing what that device last saved.
   Changes made offline are sent when the connection comes back.
 
-**Cost:** Fly.io bills by the second, and the app **sleeps when nobody is
-using it**, waking in a few seconds on the next visit. For a ward app that
-is typically **about US$1 a month or less** (it would be about US$6 if it
-never slept). Plus the domain you already have; Cloudflare stays free.
-For **$0**, see `ORACLE.md` — same app, on Oracle's free server.
+**Cost:** Fly.io has **no free tier for new accounts** (a trial of 2 hours
+or 7 days, then pay as you go). A 1 GB machine is listed at US$5.70 a month
+if it never sleeps, and reported at US$6.70 after an October 2026 price rise;
+this app sleeps when nobody is using it, so you pay for less than that. Disk
+is US$0.15 per GB a month. (Searched 29 Oct 2026 — Fly's own page was out of
+reach from here: [Fly.io pricing](https://fly.io/docs/about/pricing/).)
+**For $0, deployed from GitHub on every push, see `ORACLE.md`** — the
+recommended route.
 
 > **One thing only a real try will tell:** LCR is run by the Church, and
 > some sign-in systems treat a sign-in from a data centre with extra
