@@ -1968,3 +1968,7 @@ tr:hover .al-act-focus.is-on { border-color: var(--spruce); }
 /* The drill-down's Remaining / Actual / Potential switch sits above the list
    and stays put while it scrolls. */
 .qi-scopes { position: sticky; top: 0; z-index: 2; background: var(--ledger); margin-bottom: .8rem; }
+
+/* .set-row sets display, which would otherwise beat the hidden attribute. */
+.set-row[hidden], .set-who[hidden] { display: none; }
+.set-who { margin: .2rem 0 .4rem; }

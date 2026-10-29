@@ -77,7 +77,13 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
   place that filter lives — read roll rows from it, not from `data.rows`.
 - Never commit `lcr-session.json` (live auth cookies) or `output/` (member records).
 - Never put real member names in the repo. Use the fixture.
-- Server binds to 127.0.0.1 on purpose. Don't expose it.
+- The server is never exposed directly. Remote use goes through a Cloudflare
+  Tunnel with Cloudflare Access in front (`REMOTE.md`); with that configured
+  the server binds 127.0.0.1 so the tunnel is the only way in, and every
+  tunnelled request must carry an Access token that `lib/access.js` verifies
+  (signature, issuer, AUD, expiry) — never trust the header or the email on
+  sight. `npm run check` forges tokens to prove it. Without it, the access
+  code gate applies.
 - No build step, no framework, no bundler. Vanilla JS in `public/`.
 - In `weeks[]`, absence is omission. There is no `didAttend: false`.
 - Walk `childOrgs` when resolving `orgIds`, or class names leak as uuids.

@@ -27,6 +27,7 @@ const PORT = 4173;
 const SUITES = [
   "grid-reader",     // the LCR report reader reads every row, however the grid draws
   "month-switch",    // earlier months still load when LCR answers 409
+  "remote",          // a leader arriving through the shareable link
   "smoke",           // every tab renders; the invariants that have broken before
   "roster",          // people who left the ward appear nowhere
   "refresh",         // one refresh repaints every tab

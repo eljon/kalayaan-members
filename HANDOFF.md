@@ -56,6 +56,13 @@ auth cookie. None of that belongs in a public repo.
 
 If he raises Pages again, the Tailscale row is what he actually wants.
 
+**Chosen (Oct 2026): Cloudflare Tunnel + Cloudflare Access.** The owner wanted
+a link a few ward leaders can open from any browser without installing
+anything, so a private Tailscale network didn't fit. The app still runs on
+his computer; Access asks for an approved email; the server verifies
+Access's signed token. LCR sign-in stays on the host machine — remote users
+are told to ask the owner. Setup: `REMOTE.md`.
+
 ## How the data is obtained
 
 **Full method, reasoning, and the console snippets: `DISCOVERY.md`.**

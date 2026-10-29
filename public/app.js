@@ -1688,6 +1688,7 @@
     }
 
     await initPrefs();
+    await loadWhoami();
     // Re-apply settings from server (handles cross-machine sync)
     const ss = loadSettings();
     applyTheme(ss.theme);
@@ -1735,7 +1736,34 @@
     return pull();
   }
 
+  // Who is using the app and from where. Reached through the Cloudflare
+  // Tunnel, nobody can sign in to LCR — that opens a window on the computer
+  // running the app — so they are told to ask the owner instead of being
+  // offered a button that would open a window nobody can see.
+  let whoami = { email: null, via: "code", owner: true, canSignIn: true };
+  async function loadWhoami() {
+    try { whoami = await (await fetch("/api/whoami")).json(); } catch (_) {}
+    const who = $("set-who");
+    if (who) {
+      who.hidden = !whoami.email;
+      who.textContent = whoami.email ? "Signed in as " + whoami.email : "";
+    }
+    const so = $("set-signout-row");
+    if (so) so.hidden = !whoami.owner;
+  }
+  function needsHostSignIn(title) {
+    curtain(
+      title,
+      "Signing in to LCR has to be done on the computer the app runs on — it opens a browser " +
+        "window there for the sign-in and the code sent to the owner's phone. Ask whoever runs " +
+        "the app to sign in, then come back and refresh.",
+      "Check again",
+      boot
+    );
+  }
+
   function askSignIn() {
+    if (!whoami.canSignIn) return needsHostSignIn("The app is not signed in to LCR");
     curtain(
       "Sign in to LCR",
       "A browser window will open. Sign in the way you normally do, including any code sent to your phone. " +
@@ -1799,6 +1827,7 @@
   }
 
   function sessionGone() {
+    if (!whoami.canSignIn) return needsHostSignIn("The app's LCR sign-in has expired");
     curtain(
       "Your LCR session expired",
       "Sessions last a few days. Sign in again and the roll will refresh itself.",
@@ -1814,6 +1843,9 @@
     if (!confirm("Sign out of LCR and pull everything fresh?\n\nThis clears your saved sign-in and cached reports. You'll sign in to LCR again, and the roll rebuilds from scratch.")) return;
     try {
       const res = await fetch("/api/logout", { method: "POST" });
+      if (res.status === 403) {
+        return curtain("Only the owner can do that", "Signing out clears the LCR sign-in and every report for everybody using the app.", "OK", boot);
+      }
       if (res.status === 409) {
         return curtain("Busy right now", "A pull is already running. Wait for it to finish, then sign out.", "OK", boot);
       }

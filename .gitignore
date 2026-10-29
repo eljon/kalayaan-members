@@ -11,3 +11,6 @@ node_modules/
 run.log
 .chromium-ready
 .DS_Store
+
+# Remote-access settings (Cloudflare team, AUD tag, owner emails).
+.env

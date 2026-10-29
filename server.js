@@ -28,9 +28,20 @@ const { buildWorkbook } = require("./lib/xlsx");
 const { version: APP_VERSION } = require("./version");
 
 const crypto = require("crypto");
+const { loadDotEnv, accessConfig, keyStore, verifyAccessToken } = require("./lib/access");
+
+loadDotEnv(__dirname);
+// Remote use (REMOTE.md): Cloudflare Tunnel in front, Cloudflare Access
+// asking for an approved email. Null when not set up.
+const REMOTE = accessConfig();
+const accessKeys = REMOTE ? keyStore(REMOTE) : null;
 
 const PORT = process.env.PORT || 4173;
-const HOST = process.env.HOST || "0.0.0.0";
+// With the tunnel set up, the tunnel is the only way in: listen on this
+// machine alone, so nothing on the local network can reach the port and
+// skip the email check. Without it, keep the old behaviour (access code,
+// reachable on the local network).
+const HOST = process.env.HOST || (REMOTE ? "127.0.0.1" : "0.0.0.0");
 const CACHE_PATH = path.join(__dirname, "output", "latest.json");
 const STALE_AFTER = 12 * 60 * 60 * 1000; // suggest a fresh pull after 12h
 const VERSIONS_DIR = path.join(__dirname, "public", "_versions");
@@ -85,13 +96,47 @@ ${error ? '<p class="err">' + error + "</p>" : ""}
 <button type="submit">Continue</button></form></div></body></html>`;
 }
 
-app.use((req, res, next) => {
+// Two ways in. Through the tunnel, Cloudflare Access has already asked for
+// an approved email and signed a token saying so — verified here, never
+// taken on trust. On this machine (or the local network, without the
+// tunnel), the access code printed in the terminal. A request through the
+// tunnel with no valid token falls back to the access code, so a tunnel
+// set up without Access is still locked.
+app.use(async (req, res, next) => {
   if (req.path === "/api/auth") return next();
+  const jwt = req.headers["cf-access-jwt-assertion"];
+  if (REMOTE && jwt) {
+    try {
+      const { email } = await verifyAccessToken(jwt, REMOTE, accessKeys);
+      req.user = { email, via: "access", owner: REMOTE.owners.includes(email) };
+      return next();
+    } catch (err) {
+      console.error(`[access] refused a tunnelled request: ${err.message}`);
+      if (req.path.startsWith("/api/")) return res.status(401).json({ error: "UNAUTHORIZED" });
+      return res.status(401).send(gatePage("Your sign-in could not be verified. Close this tab and open the link again."));
+    }
+  }
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies.access_token || (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  if (token === ACCESS_TOKEN) return next();
+  if (token === ACCESS_TOKEN) {
+    req.user = { email: null, via: "code", owner: true };
+    return next();
+  }
   if (req.path.startsWith("/api/")) return res.status(401).json({ error: "UNAUTHORIZED" });
   res.status(401).send(gatePage());
+});
+
+// Who is looking, and what they may do — the interface shows the email and
+// words its sign-in messages to suit.
+app.get("/api/whoami", (req, res) => {
+  res.json({
+    email: req.user.email,
+    via: req.user.via,
+    owner: req.user.owner,
+    // Signing in to LCR opens a browser window on the computer running the
+    // app. From anywhere else nobody could see it, let alone pass MFA in it.
+    canSignIn: req.user.via !== "access",
+  });
 });
 
 // Revert route: /v4 (and /v4/app.js, /v4/style.css) serve an archived
@@ -160,6 +205,7 @@ app.get("/api/data", (req, res) => {
 
 /** Opens a real browser window for sign-in, then pulls straight away. */
 app.post("/api/login", async (req, res) => {
+  if (req.user.via === "access") return res.status(403).json({ error: "LOGIN_ON_HOST" });
   if (busy) return res.status(409).json({ error: "BUSY", busy });
   busy = "login";
   progress = "Opening the sign-in window";
@@ -420,6 +466,9 @@ app.put("/api/prefs", express.json(), (req, res) => {
 // open starts from a clean sign-in and a fresh, full pull. Use this when a
 // pull is misbehaving on a stale or half-broken session.
 app.post("/api/logout", (req, res) => {
+  // Signing out wipes the LCR session and every cached report for everyone,
+  // so it is the owner's to do.
+  if (!req.user.owner) return res.status(403).json({ error: "OWNER_ONLY" });
   if (busy) return res.status(409).json({ error: "BUSY", busy });
   clearSession();
   cache = null;
@@ -472,7 +521,11 @@ app.listen(PORT, HOST, () => {
       }
     }
   }
+  if (REMOTE) {
+    console.log(`  Remote:  through the Cloudflare Tunnel, email login via ${REMOTE.team}`);
+    console.log(`  Owners:  ${REMOTE.owners.length ? REMOTE.owners.join(", ") : "(none set — OWNER_EMAILS)"}`);
+  }
   console.log(`\n  Access code: ${ACCESS_TOKEN}`);
-  console.log("  Enter this code when opening from another device.\n");
+  console.log(REMOTE ? "  For use on this computer.\n" : "  Enter this code when opening from another device.\n");
   if (!process.env.NO_OPEN) openBrowser(url);
 });

@@ -32,8 +32,11 @@ function chromiumPath() {
     let names = [];
     try { names = fs.readdirSync(d); } catch (_) { continue; }
     for (const n of names.filter((x) => /^chromium-/.test(x)).sort().reverse()) {
-      const exe = path.join(d, n, "chrome-linux", "chrome");
-      if (fs.existsSync(exe)) return exe;
+      // Playwright has used both folder names across releases.
+      for (const sub of ["chrome-linux64", "chrome-linux"]) {
+        const exe = path.join(d, n, sub, "chrome");
+        if (fs.existsSync(exe)) return exe;
+      }
     }
   }
   return null;               // let Playwright resolve it
