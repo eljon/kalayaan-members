@@ -11,9 +11,13 @@ primary_region = "sin"            # Singapore: the closest Fly region to Manila
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "off"      # stay up: a stopped machine forgets nothing, but wakes slowly
+  # Sleep when nobody is using it, wake on the next visit (a few seconds).
+  # Fly bills by the second, so a mostly-idle ward app costs very little.
+  # Nothing is lost asleep: state is on the volume. A sign-in or a refresh
+  # keeps it awake while it runs, because the page is talking to it.
+  auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
 
   [[http_service.checks]]
     grace_period = "20s"

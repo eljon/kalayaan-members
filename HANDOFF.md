@@ -70,6 +70,12 @@ because a server has no screen. Each device keeps an offline copy
 (`public/sw.js`). Unknown until tried: whether LCR/Okta accepts a sign-in
 from a data-centre IP — `CLOUD.md` step 7 has the copy-the-session fallback.
 
+Cost: Fly sleeps when idle (`auto_stop_machines = "stop"`), roughly US$1/mo.
+For $0, `ORACLE.md`: the same Docker image on Oracle's Always Free Ampere VM,
+published on 127.0.0.1:4173 so the existing `kalayaan-roll` tunnel works
+unchanged. Cloudflare-only and Firestore were weighed and rejected: Browser
+Rendering's free tier is 10 min/day; Firestore can't run Chrome.
+
 ## How the data is obtained
 
 **Full method, reasoning, and the console snippets: `DISCOVERY.md`.**

@@ -13,8 +13,11 @@ Everything lives on a rented server — no computer of yours has to be on.
   it opens again with no connection, showing what that device last saved.
   Changes made offline are sent when the connection comes back.
 
-**Cost:** about **US$6 a month** on Fly.io (a 1 GB server, which LCR's
-reader needs), plus the domain you already have. Cloudflare stays free.
+**Cost:** Fly.io bills by the second, and the app **sleeps when nobody is
+using it**, waking in a few seconds on the next visit. For a ward app that
+is typically **about US$1 a month or less** (it would be about US$6 if it
+never slept). Plus the domain you already have; Cloudflare stays free.
+For **$0**, see `ORACLE.md` — same app, on Oracle's free server.
 
 > **One thing only a real try will tell:** LCR is run by the Church, and
 > some sign-in systems treat a sign-in from a data centre with extra

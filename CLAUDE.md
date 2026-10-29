@@ -77,7 +77,8 @@ Installs on first run, opens the browser, handles LCR sign-in in-app.
   place that filter lives — read roll rows from it, not from `data.rows`.
 - Never commit `lcr-session.json` (live auth cookies) or `output/` (member records).
 - Never put real member names in the repo. Use the fixture.
-- **It runs in the cloud** (`CLOUD.md`): Fly.io, `Dockerfile`, state on the
+- **It runs in the cloud** (`CLOUD.md`: Fly.io, sleeps when idle; or `ORACLE.md`:
+  Oracle Always Free + the Cloudflare tunnel, `deploy/*.sh`): `Dockerfile`, state on the
   volume via `DATA_DIR` (`lib/paths.js` — never write `output/` paths by
   hand). Cloudflare Access is the only way in there: every request must carry
   an Access token that `lib/access.js` verifies (signature, issuer, AUD,
