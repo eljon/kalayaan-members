@@ -202,6 +202,17 @@ Two constraints that came out of the shape:
   harvest depends on the month control being a native `<select>`; if that
   ever stops holding, fall back to the manual capture below.
 
+  **October 2026: every earlier month came back `HTTP 409`.** The old
+  self-heal only fired on 404/400, so it never ran. A 409 from a server
+  action means the request does not match the deployment it reached — a
+  stale id, a header the page now sends that a replay omits (e.g. a
+  deployment id), or a request that does not look same-origin. The month
+  POST is now made **from inside the page** with `fetch` (so Origin,
+  Referer, cookies and fetch metadata are a real click's), heals on **any
+  4xx except 401/403**, and adopts **every** `next-*` / `x-*` header off
+  the page's own action call, not just the id. `dev/ui/month-switch.js`
+  runs it against a stand-in that answers 409 unless all of that matches.
+
   The symptom (when self-heal can't recover) is unmistakable: the current month still loads (it comes from
   the passive page load, no action needed) but every earlier month is
   skipped with `Month NN returned HTTP 404`. To grab the fresh id, sign in
